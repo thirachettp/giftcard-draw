@@ -9,7 +9,8 @@ export default handler(async (req, res) => {
   const nick = String(b.nick || '').trim();
   const unspecified = !!b.unspecified;
   const giftText = unspecified ? '' : String(b.gift_text || '').trim();
-  const icon = ICONS.includes(b.icon) ? b.icon : (unspecified ? 'mystery' : 'box');
+  const [iconKey, iconVar] = String(b.icon || '').split(':');
+  const icon = ICONS.includes(iconKey) ? iconKey + (/^[0-9]$/.test(iconVar || '') && iconVar !== '0' ? ':' + iconVar : '') : (unspecified ? 'mystery' : 'box');
   if (!nick || nick.length > 24) return fail(res, 400, 'bad_nick');
   if (!unspecified && (giftText.length < 2 || giftText.length > 200)) return fail(res, 400, 'bad_gift');
 

@@ -61,7 +61,7 @@
         </div>
         <div class="field">
           <span class="lbl">ภาพตัวอย่างของขวัญ</span>
-          <div class="prevbox"><div class="pv" id="fPrev"></div><div class="hintx" id="fPrevTxt"></div></div>
+          <div class="prevbox"><div class="pv" id="fPrev"></div><div><div class="hintx" id="fPrevTxt"></div><button type="button" class="btn ghost small" id="fRedraw" style="margin-top:8px">วาดใหม่</button></div></div>
         </div>
         <p class="ferr" id="eForm" role="alert"></p>
         <div class="btnrow">
@@ -305,12 +305,14 @@ async function startDraw() {
 /* ---------- ฟอร์มลงทะเบียน ---------- */
 var F = { nick: $('#fNick'), gift: $('#fGift'), un: $('#fUn'), submit: $('#fSubmit') };
 function setErr(id, m) { $('#' + id).textContent = m || ''; }
+var variant = 0;
+function curIcon() { return G.guessIcon(F.gift.value, F.un.checked) + (variant ? ':' + variant : ''); }
 function preview() {
-  var key = G.guessIcon(F.gift.value, F.un.checked);
-  $('#fPrev').innerHTML = G.iconSvg(key, 64);
-  $('#fPrevTxt').textContent = F.un.checked ? 'ไม่ระบุ: ผู้รับจะเห็นเป็นกล่องปริศนา ? จนกว่าจะเปิด' : 'ภาพแบนเรียบง่ายที่เลือกให้ตามชื่อของขวัญ';
+  $('#fPrev').innerHTML = G.iconSvg(curIcon(), 64);
+  $('#fPrevTxt').textContent = F.un.checked ? 'ไม่ระบุ: ผู้รับจะเห็นเป็นกล่องปริศนา ? จนกว่าจะเปิด' : 'ภาพแบนเรียบง่ายที่เลือกให้ตามชื่อของขวัญ ไม่ถูกใจกด "วาดใหม่" เพื่อเปลี่ยนสีและทิศทาง';
   F.gift.disabled = F.un.checked;
 }
+$('#fRedraw').addEventListener('click', function () { var n; do { n = Math.floor(Math.random() * 10); } while (n === variant); variant = n; preview(); var pv = $('#fPrev'); pv.animate([{ transform: 'rotate(-8deg) scale(.85)', opacity: .3 }, { transform: 'none', opacity: 1 }], { duration: 350, easing: 'ease-out' }); });
 F.gift.addEventListener('input', preview); F.un.addEventListener('change', preview);
 var formFor = null;
 function ensureForm() {
@@ -319,6 +321,7 @@ function ensureForm() {
   formFor = key;
   ['eNick', 'eGift', 'eForm'].forEach(function (i) { setErr(i, ''); });
   F.nick.value = S.me ? S.me.nick : ''; F.gift.value = S.me ? S.me.gift_text : ''; F.un.checked = S.me ? S.me.unspecified : false;
+  variant = S.me ? G.parseIcon(S.me.icon).v : 0;
   $('#formTitle').textContent = S.me ? 'แก้ข้อมูลของคุณ' : 'ลงทะเบียนของขวัญ';
   F.submit.textContent = S.me ? 'บันทึก' : 'ลงทะเบียน';
   preview();
@@ -333,7 +336,7 @@ $('#f').addEventListener('submit', async function (e) {
   if (!un && gift.length < 2) { setErr('eGift', 'บอกหน่อยว่าของขวัญคืออะไร หรือเลือก "ไม่ระบุ"'); ok = false; }
   if (!ok) return;
   F.submit.disabled = true;
-  var r = await api('/api/join', { nick: nick, gift_text: gift, unspecified: un, icon: G.guessIcon(gift, un) });
+  var r = await api('/api/join', { nick: nick, gift_text: gift, unspecified: un, icon: curIcon() });
   F.submit.disabled = false;
   if (r.status === 200) { S.editing = false; S.formOpen = false; formFor = null; toast('บันทึกแล้ว'); await refresh(true); return; }
   setErr('eForm', ERR[r.error] || 'บันทึกไม่สำเร็จ ลองอีกครั้ง');

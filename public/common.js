@@ -46,9 +46,16 @@
     for (var i = 0; i < KEYWORDS.length; i++) if (KEYWORDS[i][1].test(text || '')) return KEYWORDS[i][0];
     return 'box';
   }
-  function iconSvg(key, size) {
+  /* spec = "ชื่อไอคอน" หรือ "ชื่อไอคอน:เลขแบบ" เลขแบบ 0-9 ใช้เปลี่ยนสีและพลิกภาพ (ปุ่ม วาดใหม่) */
+  function parseIcon(spec) {
+    var m = String(spec || 'box').split(':'), v = parseInt(m[1], 10);
+    return { key: ICON_SVG[m[0]] ? m[0] : 'box', v: v >= 0 && v <= 9 ? v : 0 };
+  }
+  function iconSvg(spec, size) {
     size = size || 36;
-    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 36 36" aria-hidden="true">' + (ICON_SVG[key] || ICON_SVG.box) + '</svg>';
+    var p = parseIcon(spec), st = '';
+    if (p.v) st = 'style="filter:hue-rotate(' + (p.v * 41 % 360) + 'deg)' + (p.v % 2 ? ';transform:scaleX(-1)' : '') + '"';
+    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 36 36" aria-hidden="true" ' + st + '>' + ICON_SVG[p.key] + '</svg>';
   }
 
   /* ถามย้ำหลายขั้น: steps = [{title, items[], note, ok, cancel, danger}] คืน Promise<boolean> */
@@ -82,5 +89,5 @@
     });
   }
 
-  window.GD = { el: el, toast: toast, iconSvg: iconSvg, guessIcon: guessIcon, confirmFlow: confirmFlow };
+  window.GD = { el: el, toast: toast, iconSvg: iconSvg, parseIcon: parseIcon, guessIcon: guessIcon, confirmFlow: confirmFlow };
 })();
