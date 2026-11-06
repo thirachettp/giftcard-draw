@@ -275,3 +275,6 @@ img{max-width:100%}
 .sleighfx .cap span{display:inline-block;background:rgba(21,16,31,.82);border:1px solid var(--gold);border-radius:999px;padding:8px 22px}
 .sleighfx .skip{position:absolute;right:16px;bottom:16px;z-index:2}
 .sleighfx .scn{position:absolute;inset:0}
+
+.openfx .ocard .from{margin-top:8px;font-size:.85rem;color:#cdbfe2}
+.openfx .savetip{position:relative;z-index:3;text-align:center;color:#cdbfe2;font-size:.9rem;margin:14px 0 0;max-width:300px}

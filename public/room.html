@@ -151,6 +151,7 @@ function route() {
   if (S.editing || (S.formOpen && !S.me && S.room.phase === 'register')) { show('form'); ensureForm(); return; }
   show('main'); renderMain();
   maybeAnimate();
+  maybeAutoOpen();
 }
 
 /* ---------- หน้าห้อง (หน้าเดียว) ---------- */
@@ -196,6 +197,11 @@ function renderMain() {
     tile.type = 'button'; tile.style.margin = '14px 0';
     tile.addEventListener('click', function () { openBox(); });
     mine.append(tile);
+    var got = R.results.filter(function (x) { return x.from === me.id; })[0];
+    var gl = el('p', 'muted'); gl.style.margin = '0 0 10px';
+    gl.append(document.createTextNode('ใครได้รับของขวัญของฉัน: '));
+    gl.append(got ? el('b', null, (playerOf(got.to) || {}).nick || '-') : document.createTextNode('ยังไม่มีใครเปิด จะเห็นเมื่อผู้รับเปิดกล่อง'));
+    mine.append(gl);
   } else if (drawn && !me) {
     mine.append(el('p', 'muted', 'ห้องนี้จับฉลากแล้ว คุณดูได้ว่าใครเปิดกล่องไปแล้วบ้าง'));
   }
@@ -366,6 +372,15 @@ function maybeAnimate() {
   sc.deliver(end, function (n) { capT.textContent = caps[n]; });
 }
 
+/* หลังจับฉลาก ผู้ที่ยังไม่เปิดจะเข้าหน้าเปิดกล่องทันที (ครั้งเดียวต่อรอบ) */
+function maybeAutoOpen() {
+  var R = S.room;
+  if (S.animating || R.phase !== 'drawn' || !S.me || !S.myRes || S.myRes.opened_at) return;
+  if (S.autoFor === R.drawn_at) return;
+  S.autoFor = R.drawn_at;
+  setTimeout(function () { if (!document.querySelector('.openfx') && !S.animating) openBox(); }, 150);
+}
+
 /* ---------- เปิดกล่องของขวัญ ---------- */
 var fxParts = [], fxRun = false;
 function openBox() {
@@ -376,20 +391,25 @@ function openBox() {
   var st = el('div', 'stage2');
   var card = el('div', 'ocard');
   var pic = el('div', 'pic'); pic.innerHTML = G.iconSvg(r.icon, 96);
+  var giver = (playerOf(r.giver_id) || {}).nick || '-';
   card.append(pic, el('div', 'no', '#' + r.gift_no), el('p', null, r.unspecified || !r.gift_text ? 'ของขวัญปริศนา (ผู้ให้ไม่ระบุ)' : r.gift_text));
+  var from = el('p', 'from'); from.append(document.createTextNode('ได้รับของขวัญของ '), el('b', null, giver)); card.append(from);
   st.append(el('div', 'glow'), card, el('div', 'obody'), el('div', 'olid'));
-  var acts = el('div', 'acts'), close = el('button', 'btn ghost', 'ปิด'); close.type = 'button'; acts.append(close);
+  var tip = el('p', 'savetip', 'แนะนำให้บันทึกภาพหน้าจอนี้เก็บไว้ จะได้ไม่ลืมว่าได้ของขวัญของใคร'); tip.hidden = true;
+  var acts = el('div', 'acts'), close = el('button', 'btn ghost', 'ปิด'); close.type = 'button';
+  var save = el('button', 'btn', 'บันทึกภาพ'); save.type = 'button'; save.hidden = true; save.addEventListener('click', function () { saveImage(r, giver); });
+  acts.append(save, close);
   var cv = el('canvas'); cv.setAttribute('aria-hidden', 'true');
-  ov.append(head, st, acts, cv); document.body.append(ov); document.body.style.overflow = 'hidden';
+  ov.append(head, st, tip, acts, cv); document.body.append(ov); document.body.style.overflow = 'hidden';
   function done() { fxParts = []; ov.remove(); document.body.style.overflow = ''; route(); }
   close.addEventListener('click', done);
   ov.addEventListener('keydown', function (e) { if (e.key === 'Escape') done(); });
   function reveal() {
-    ov.classList.add('on'); head.textContent = 'ของขวัญของคุณคือเบอร์ #' + r.gift_no;
+    ov.classList.add('on'); head.textContent = 'ของขวัญของคุณคือเบอร์ #' + r.gift_no; tip.hidden = false; save.hidden = false;
     $('#live').textContent = 'ของขวัญของคุณคือเบอร์ ' + r.gift_no;
     confetti(cv);
   }
-  if (already) { ov.classList.add('on'); head.textContent = 'ของขวัญของคุณคือเบอร์ #' + r.gift_no; close.focus(); return; }
+  if (already) { ov.classList.add('on'); head.textContent = 'ของขวัญของคุณคือเบอร์ #' + r.gift_no; tip.hidden = false; save.hidden = false; close.focus(); return; }
   var btn = el('button', 'btn', 'เปิดกล่อง'); btn.type = 'button'; acts.prepend(btn);
   function go() {
     if (S.myRes.opened_at) return;
@@ -401,6 +421,33 @@ function openBox() {
     });
   }
   btn.addEventListener('click', go); st.addEventListener('click', go); btn.focus();
+}
+function saveImage(r, giver) {
+  var W = 720, H = 960, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  var c = cv.getContext('2d');
+  var g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#1a1230'); g.addColorStop(1, '#4a2350'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+  c.textAlign = 'center'; c.fillStyle = '#f4c24d'; c.font = '700 34px "Noto Sans Thai",sans-serif'; c.fillText(S.room.title, W / 2, 90, W - 80);
+  var svg = G.iconSvg(r.icon, 360).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ');
+  var img = new Image();
+  function finish() {
+    c.fillStyle = '#f4c24d'; c.font = '700 96px Chonburi,serif'; c.fillText('#' + r.gift_no, W / 2, 640);
+    c.fillStyle = '#f6effc'; c.font = '34px "Noto Sans Thai",sans-serif';
+    c.fillText(r.unspecified || !r.gift_text ? 'ของขวัญปริศนา' : r.gift_text, W / 2, 710, W - 80);
+    c.fillStyle = '#cdbfe2'; c.font = '30px "Noto Sans Thai",sans-serif';
+    c.fillText('ได้รับของขวัญของ ' + giver, W / 2, 780, W - 80);
+    c.font = '24px "Noto Sans Thai",sans-serif'; c.fillText('Giftcard · ห้อง ' + CODE, W / 2, 890);
+    cv.toBlob(function (b) {
+      if (!b) { toast('บันทึกภาพไม่สำเร็จ ลองแคปหน้าจอแทน'); return; }
+      var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'giftcard-' + CODE + '-' + r.gift_no + '.png';
+      document.body.append(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+    }, 'image/png');
+  }
+  img.onload = function () {
+    c.fillStyle = 'rgba(255,255,255,.06)'; c.beginPath(); c.arc(W / 2, 330, 250, 0, 7); c.fill();
+    c.drawImage(img, W / 2 - 180, 150, 360, 360); finish();
+  };
+  img.onerror = function () { finish(); };
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
 }
 function confetti(cv) {
   if (reduced) return;
