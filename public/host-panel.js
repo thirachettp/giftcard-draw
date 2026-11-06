@@ -58,6 +58,12 @@ HP.openSettings = function () {
   var ts = el('button', 'btn small', 'บันทึกชื่องาน'); ts.type = 'button';
   ts.addEventListener('click', async function () { var r = await call('settings', { title: ti.value }); toast(r.status === 200 ? 'บันทึกแล้ว' : 'บันทึกไม่สำเร็จ'); await load(); });
   tb.append(ti, ts); b.append(el('div', 'lbl', 'ชื่องาน'), tb);
+  if (!drawn) {
+    var rm = el('div', 'lbl', 'ตอนเฉลยแล้ว'), sel = el('select'); sel.setAttribute('aria-label', 'โหมดเฉลย');
+    [['names', 'เห็นแค่ชื่อ (ใครได้ของใคร)'], ['gifts', 'เห็นของขวัญด้วย (ของที่คนอื่นจับได้คืออะไร)']].forEach(function (o) { var op = el('option', null, o[1]); op.value = o[0]; if ((room.reveal_mode || 'names') === o[0]) op.selected = true; sel.append(op); });
+    sel.addEventListener('change', async function () { var r = await call('settings', { reveal_mode: sel.value }); toast(r.status === 200 ? 'บันทึกโหมดเฉลยแล้ว' : 'บันทึกไม่สำเร็จ'); await load(); });
+    sel.style.cssText = 'width:100%;margin-bottom:16px'; b.append(rm, sel);
+  } else b.append(el('p', 'hintx', 'โหมดเฉลย: ' + ((room.reveal_mode || 'names') === 'gifts' ? 'เห็นของขวัญด้วย' : 'เห็นแค่ชื่อ')));
   var row = el('div', 'admin-row');
   function btn(label, fn, cls) { var x = el('button', 'btn ' + (cls || 'ghost'), label); x.type = 'button'; x.addEventListener('click', function () { fn(x); }); row.append(x); return x; }
   btn('คัดลอกลิงก์ผู้จัด (เก็บไว้ให้ดี)', function () { copy(HP.adminLink(), 'คัดลอกลิงก์ผู้จัดแล้ว เก็บไว้ให้ดี'); });

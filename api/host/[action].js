@@ -22,7 +22,7 @@ export default handler(async (req, res) => {
       ]);
       if (players.error || results.error) return fail(res, 500, 'server_error');
       return send(res, 200, {
-        room: { id: room.id, title: room.title, phase: room.phase, number_mode: room.number_mode || 'running', drawn_at: room.drawn_at, expires_at: room.expires_at },
+        room: { id: room.id, title: room.title, phase: room.phase, number_mode: room.number_mode || 'running', reveal_mode: room.reveal_mode || 'names', drawn_at: room.drawn_at, expires_at: room.expires_at },
         players: players.data.map(({ user_id, ...p }) => ({ ...p, bound: !!user_id })),
         results: results.data,
       });
@@ -98,6 +98,10 @@ export default handler(async (req, res) => {
         const t = String(b.title).trim().slice(0, 60);
         if (!t) return fail(res, 400, 'bad_title');
         patch.title = t;
+      }
+      if (b.reveal_mode != null) {
+        if (room.phase === 'drawn') return fail(res, 409, 'already_drawn');
+        patch.reveal_mode = b.reveal_mode === 'gifts' ? 'gifts' : 'names';
       }
       if (Object.keys(patch).length) await sb.from('rooms').update(patch).eq('id', rid);
       return send(res, 200, { ok: true });

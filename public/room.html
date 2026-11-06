@@ -399,7 +399,7 @@ function renderFinder() {
       var mine = byTo[hit.id], sent = R.results.filter(function (r) { return r.from === hit.id; })[0];
       var card = el('div', 'res-card');
       var a = el('div'); a.append(document.createTextNode('🎁 '), el('b', null, hit.nick), document.createTextNode(mine && mine.opened && mine.from ? ' ได้รับของขวัญของ ' : ' ยังไม่เปิดกล่อง จึงยังไม่เห็นว่าได้ของใคร'));
-      if (mine && mine.opened && mine.from) a.append(el('b', null, (playerOf(mine.from) || {}).nick || '-'));
+      if (mine && mine.opened && mine.from) { a.append(el('b', null, (playerOf(mine.from) || {}).nick || '-')); if (mine.gift) a.append(document.createTextNode(' · ' + (mine.gift.u || !mine.gift.t ? 'กล่องปริศนา' : mine.gift.t))); }
       var b2 = el('div'); b2.append(document.createTextNode('📦 ของขวัญของ '), el('b', null, hit.nick));
       b2.append(document.createTextNode(sent ? ' ไปอยู่กับ ' : ' ยังไม่มีใครเปิด จะเห็นเมื่อผู้รับเปิดกล่อง'));
       if (sent) b2.append(el('b', null, (playerOf(sent.to) || {}).nick || '-'));
@@ -411,7 +411,7 @@ function renderFinder() {
     var r = byTo[p.id], op = !!(r && r.opened), col = COLORS[i % COLORS.length];
     var t = el('button', 'gt' + (op ? ' op' : '') + (S.me && S.me.id === p.id ? ' me' : '') + (S.pin === p.id ? ' pin' : '')); t.type = 'button';
     var tip = el('span', 'tip');
-    if (op && r.from) { tip.append(el('b', null, p.nick), document.createTextNode(' ได้รับของขวัญของ '), el('b', null, (playerOf(r.from) || {}).nick || '-')); }
+    if (op && r.from) { tip.append(el('b', null, p.nick), document.createTextNode(' ได้รับของขวัญของ '), el('b', null, (playerOf(r.from) || {}).nick || '-')); if (r.gift) tip.append(document.createTextNode(' · ' + (r.gift.u || !r.gift.t ? 'กล่องปริศนา' : r.gift.t))); }
     else tip.textContent = 'ยังไม่เปิดกล่อง · จะเห็นหลังเปิด';
     var gb = el('span', 'gb'); gb.style.display = 'block';
     if (op) gb.append(el('s'));

@@ -88,6 +88,11 @@ body{padding:0}
         <label class="nm"><input type="radio" name="numMode" value="manual"><span><b>ให้ทุกคนกรอกเอง</b><small>เช่น เบอร์ที่ติดบนกล่องจริง · ผู้จัดแก้เลขให้ได้ภายหลัง</small></span></label>
       </fieldset>
       <span class="ferr" id="eCreate" role="alert"></span>
+      <fieldset class="numopt" style="border:0;padding:0;margin:0;display:grid;gap:8px">
+        <legend style="font-weight:500;padding:0 0 6px">ตอนเฉลยแล้ว</legend>
+        <label class="nm"><input type="radio" name="revealMode" value="names" checked><span><b>เห็นแค่ชื่อ</b><small>รู้ว่าใครได้ของใคร แต่ไม่รู้ว่าของขวัญนั้นคืออะไร</small></span></label>
+        <label class="nm"><input type="radio" name="revealMode" value="gifts"><span><b>เห็นของขวัญด้วย</b><small>ทุกคนดูได้ว่าของที่คนอื่นจับได้คืออะไร (หลังเขาเปิดกล่อง)</small></span></label>
+      </fieldset>
       <button class="btn full" type="submit" id="cSubmit">สร้างห้อง</button>
       <div class="hintx">ห้องและข้อมูลทุกคนจะถูกลบอัตโนมัติใน 30 วัน ผู้จัดลบเองได้ทุกเมื่อ</div>
     </div>
@@ -210,7 +215,7 @@ $('#createForm').addEventListener('submit', async function (e) {
   $('#cSubmit').disabled = true;
   var r = {}, st = 0;
   try {
-    var res = await fetch('/api/create-room', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ title: title, number_mode: ($('input[name=numMode]:checked') || {}).value || 'running' }) });
+    var res = await fetch('/api/create-room', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ title: title, number_mode: ($('input[name=numMode]:checked') || {}).value || 'running', reveal_mode: ($('input[name=revealMode]:checked') || {}).value || 'names' }) });
     st = res.status; r = await res.json();
   } catch (x) {}
   $('#cSubmit').disabled = false;
