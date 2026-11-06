@@ -499,18 +499,20 @@ function openBox() {
   var myNick = S.me ? S.me.nick : '';
   var giver = (playerOf(r.giver_id) || {}).nick || '-';
   var ov = el('div', 'openfx'); ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', 'เปิดกล่องของขวัญ');
-  var who = el('p', 'who', myNick ? 'ของขวัญของ ' + myNick : '');
+  var who = el('p', 'who', myNick ? 'ของขวัญของ ' + myNick : ''); var CROWN = '<svg class="crown" width="34" height="22" viewBox="0 0 34 22" aria-hidden="true"><path d="M3 19 1 5l8 6 8-10 8 10 8-6-2 14Z" fill="#f4c24d"/></svg>';
   var head = el('p', 'ohead', already ? '' : 'ลากฝากล่องขึ้นเพื่อแง้มดู · ปัดขึ้นสุดเพื่อเปิด');
   var st = el('div', 'stage2');
   var card = el('div', 'ocard');
-  var pic = el('div', 'pic'); pic.innerHTML = G.iconSvg(r.icon, 96);
-  card.append(pic, el('div', 'no', '#' + r.gift_no), el('p', null, r.unspecified || !r.gift_text ? 'ของขวัญปริศนา (ผู้ให้ไม่ระบุ)' : r.gift_text));
-  var from = el('p', 'from'); from.append(document.createTextNode('ของขวัญของ '), el('b', null, giver)); card.append(from);
-  var pair = el('p', 'pair'); pair.append(document.createTextNode((myNick || 'ฉัน') + ' จับได้ของขวัญของ ' + giver));
+  var crow = el('div', 'crow'), sic = el('span', 'sic'); sic.innerHTML = G.iconSvg(r.icon, 38);
+  crow.append(sic, el('span', 'no', '#' + r.gift_no));
+  card.append(crow, el('p', 'gt2', r.unspecified || !r.gift_text ? 'ของขวัญปริศนา (ผู้ที่ไม่ระบุ)' : r.gift_text));
+  var from = el('p', 'from'); from.append(document.createTextNode('จาก '), el('b', null, giver)); card.append(from);
+  var fpic = el('div', 'fpic'); fpic.innerHTML = G.iconSvg(r.icon, 96);
+  var hint = el('div', 'swipehint'); hint.setAttribute('aria-hidden', 'true'); hint.innerHTML = '<i></i><i></i><i></i>';
   var bn = el('div', 'bignum'); bn.append(el('small', null, 'เบอร์ของขวัญของคุณ'), el('b', null, '#' + r.gift_no));
   var ob = el('div', 'obody'); ob.append(el('span', 'oname', 'กล่องของ ' + (myNick || 'ฉัน')));
   var lid = el('div', 'olid'), glow = el('div', 'glow');
-  st.append(glow, card, pair, bn, ob, lid);
+  st.append(glow, fpic, card, bn, ob, lid, hint); ov.classList.add('idle');
   var tip = el('p', 'savetip', 'แนะนำให้บันทึกภาพหน้าจอนี้เก็บไว้ จะได้ไม่ลืมว่าได้ของขวัญของใคร'); tip.hidden = true;
   var acts = el('div', 'acts'), close = el('button', 'btn ghost', 'ปิด'); close.type = 'button';
   var save = el('button', 'btn', 'บันทึกภาพ'); save.type = 'button'; save.hidden = true; save.addEventListener('click', function () { saveImage(r, giver); });
@@ -520,17 +522,17 @@ function openBox() {
   function done() { fxParts = []; ov.remove(); document.body.style.overflow = ''; route(); }
   close.addEventListener('click', done);
   ov.addEventListener('keydown', function (e) { if (e.key === 'Escape') done(); });
-  function showCard() { ov.classList.remove('num'); ov.classList.add('on'); head.textContent = ''; tip.hidden = false; save.hidden = false; close.focus(); }
-  if (already) { ov.classList.add('on'); tip.hidden = false; save.hidden = false; close.focus(); return; }
+  function showCard() { ov.classList.remove('num'); ov.classList.add('on'); who.innerHTML = CROWN; who.append(document.createTextNode(' ' + (myNick || 'ฉัน') + ' จับได้ของ ' + giver)); head.textContent = S.room.title; tip.hidden = false; save.hidden = false; close.focus(); }
+  if (already) { ov.classList.remove('idle'); showCard(); tip.hidden = false; save.hidden = false; close.focus(); return; }
   var opened = false, btn = el('button', 'btn', 'เปิดกล่อง'); btn.type = 'button'; acts.prepend(btn);
   function go() {
     if (opened || S.myRes.opened_at) return; opened = true;
     S.myRes.opened_at = new Date().toISOString();
     btn.remove(); lid.style.transition = ''; lid.style.transform = ''; glow.style.opacity = '';
-    head.textContent = 'เปิดแล้ว!'; ov.classList.add('num');
+    head.textContent = 'เปิดแล้ว!'; ov.classList.remove('idle'); ov.classList.add('num');
     $('#live').textContent = 'ของขวัญของคุณคือเบอร์ ' + r.gift_no;
     confetti(cv);
-    setTimeout(function () { head.textContent = ''; showCard(); }, reduced ? 600 : 2200);
+    setTimeout(function () { showCard(); }, reduced ? 600 : 2200);
     sb.from('results').update({ opened_at: S.myRes.opened_at }).eq('room_id', CODE).eq('receiver_id', S.me.id).then(function (x) {
       if (x && x.error) toast('บันทึกสถานะการเปิดไม่สำเร็จ แต่ผลของคุณยังอยู่');
       else refresh(true);
@@ -545,7 +547,7 @@ function openBox() {
     head.textContent = lift > 8 && lift < TH ? 'แง้มดูนิดนึง… ลากขึ้นอีกเพื่อเปิด' : (lift >= TH ? 'ปล่อยเพื่อเปิด!' : 'ลากฝากล่องขึ้นเพื่อแง้มดู · ปัดขึ้นสุดเพื่อเปิด');
   }
   st.style.touchAction = 'none';
-  st.addEventListener('pointerdown', function (e) { if (opened) return; y0 = e.clientY; t0 = performance.now(); lid.style.transition = 'none'; try { st.setPointerCapture(e.pointerId); } catch (x) {} });
+  st.addEventListener('pointerdown', function (e) { if (opened) return; y0 = e.clientY; t0 = performance.now(); ov.classList.remove('idle'); lid.style.transition = 'none'; try { st.setPointerCapture(e.pointerId); } catch (x) {} });
   st.addEventListener('pointermove', function (e) { if (y0 == null || opened) return; setLift(y0 - e.clientY); });
   function release(e) {
     if (y0 == null || opened) return;
@@ -553,7 +555,7 @@ function openBox() {
     y0 = null;
     if (lift >= TH || fast) { go(); return; }
     lid.style.transition = 'transform .55s cubic-bezier(.3,1.7,.5,1)'; glow.style.transition = 'opacity .4s';
-    setLift(0); lift = 0; head.textContent = 'ลากฝากล่องขึ้นเพื่อแง้มดู · ปัดขึ้นสุดเพื่อเปิด';
+    setLift(0); lift = 0; setTimeout(function () { if (!opened) ov.classList.add('idle'); }, 700); head.textContent = 'ลากฝากล่องขึ้นเพื่อแง้มดู · ปัดขึ้นสุดเพื่อเปิด';
   }
   st.addEventListener('pointerup', release); st.addEventListener('pointercancel', release);
   btn.addEventListener('click', go); btn.focus();
@@ -562,8 +564,8 @@ function saveImage(r, giver) {
   var W = 720, H = 960, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   var c = cv.getContext('2d');
   var g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#1a1230'); g.addColorStop(1, '#4a2350'); c.fillStyle = g; c.fillRect(0, 0, W, H);
-  c.textAlign = 'center'; c.fillStyle = '#f4c24d'; c.font = '700 34px "Noto Sans Thai",sans-serif'; c.fillText(S.room.title, W / 2, 80, W - 80);
-  if (S.me) { c.fillStyle = '#f6effc'; c.font = '30px "Noto Sans Thai",sans-serif'; c.fillText('ของขวัญของ ' + S.me.nick, W / 2, 125, W - 80); }
+  c.textAlign = 'center'; c.fillStyle = '#f4c24d'; c.font = '700 34px "Noto Sans Thai",sans-serif'; c.fillText((S.me ? S.me.nick : 'ฉัน') + ' จับได้ของ ' + giver, W / 2, 84, W - 60);
+  c.fillStyle = '#cdbfe2'; c.font = '28px "Noto Sans Thai",sans-serif'; c.fillText(S.room.title, W / 2, 130, W - 80);
   var svg = G.iconSvg(r.icon, 360).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ');
   var img = new Image();
   function finish() {
@@ -571,8 +573,7 @@ function saveImage(r, giver) {
     c.fillStyle = '#f6effc'; c.font = '34px "Noto Sans Thai",sans-serif';
     c.fillText(r.unspecified || !r.gift_text ? 'ของขวัญปริศนา' : r.gift_text, W / 2, 710, W - 80);
     c.fillStyle = '#cdbfe2'; c.font = '30px "Noto Sans Thai",sans-serif';
-    c.fillText('ของขวัญของ ' + giver, W / 2, 780, W - 80);
-    c.fillStyle = '#b0a3c9'; c.font = '24px "Noto Sans Thai",sans-serif'; c.fillText((S.me ? S.me.nick : 'ฉัน') + ' จับได้ของขวัญของ ' + giver, W / 2, 830, W - 80);
+    c.fillText('จาก ' + giver, W / 2, 790, W - 80);
     c.font = '24px "Noto Sans Thai",sans-serif'; c.fillText('Giftcard · ห้อง ' + CODE, W / 2, 890);
     cv.toBlob(function (b) {
       if (!b) { toast('บันทึกภาพไม่สำเร็จ ลองแคปหน้าจอแทน'); return; }

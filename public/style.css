@@ -319,3 +319,32 @@ img{max-width:100%}
 .openfx .ocard .from{font-size:1rem;color:#f6effc}.openfx .ocard .from b{color:#f4c24d;font-size:1.15rem}
 .openfx .pair{position:absolute;left:0;right:0;top:350px;text-align:center;font-size:.8rem;color:#b0a3c9;margin:0;opacity:0;z-index:2}
 .openfx.on .pair{opacity:1;transition:opacity .5s .5s}
+
+/* v4.1: หน้าผลแบบเปิดแล้วเห็นกล่อง+ของลอย+การ์ดด้านล่าง */
+.openfx .stage2{height:500px}
+.openfx .who{display:flex;align-items:center;justify-content:center;gap:6px;font-size:1.5rem;text-shadow:0 0 18px rgba(244,194,77,.5)}
+.openfx .who .crown{flex:none}
+.openfx .fpic{position:absolute;left:82px;top:190px;width:96px;height:96px;z-index:2;opacity:0;filter:drop-shadow(0 0 18px rgba(255,226,168,.9))}
+.openfx.on .fpic{top:46px;opacity:1;transition:top 1s cubic-bezier(.2,.9,.3,1.2) .15s,opacity .5s .15s;animation:fpf 3s ease-in-out 1.3s infinite}
+@keyframes fpf{50%{transform:translateY(-8px)}}
+.openfx.on .obody{top:176px;height:104px;transform:none;opacity:1}
+.openfx.on .olid{top:136px;transform-origin:right bottom;transform:translate(-10px,-8px) rotate(80deg) scale(.6);opacity:1}
+.openfx.on .ocard{left:6px;width:248px;top:306px;height:auto;padding:14px 16px;opacity:1;transition:opacity .6s .5s}
+.openfx .ocard .crow{display:flex;align-items:center;gap:10px}
+.openfx .ocard .crow .no{margin:0;font-size:2rem}
+.openfx .ocard .gt2{margin:8px 0 0;font-size:1rem}
+.openfx .ocard .from{margin-top:10px;padding-top:10px;border-top:1px solid #3d2f58;font-size:1rem;color:#f6effc}
+.openfx .ocard .from b{color:#f4c24d;font-size:1.25rem}
+.openfx.on .bignum{display:none}
+/* คำใบ้ให้ลากขึ้น */
+.openfx .swipehint{position:absolute;left:50%;top:104px;margin-left:-18px;width:36px;height:70px;z-index:6;pointer-events:none;opacity:0}
+.openfx .swipehint i{position:absolute;left:6px;width:22px;height:22px;border-left:4px solid #ffe9b8;border-top:4px solid #ffe9b8;transform:rotate(45deg);opacity:0}
+.openfx.idle .swipehint{opacity:.9}
+.openfx.idle .swipehint i{animation:chev 1.8s ease-in-out infinite}
+.openfx.idle .swipehint i:nth-child(1){top:0;animation-delay:.5s}.openfx.idle .swipehint i:nth-child(2){top:20px;animation-delay:.25s}.openfx.idle .swipehint i:nth-child(3){top:40px}
+@keyframes chev{0%{opacity:0;transform:translateY(14px) rotate(45deg)}40%{opacity:.85}100%{opacity:0;transform:translateY(-10px) rotate(45deg)}}
+.openfx.idle .olid{animation:nudge 2.4s ease-in-out infinite}
+@keyframes nudge{0%,55%,100%{transform:none}70%{transform:translate(-6px,-14px) rotate(-5deg)}85%{transform:translate(-3px,-6px) rotate(-2deg)}}
+.openfx.idle .glow{animation:glowp 2.4s ease-in-out infinite}
+@keyframes glowp{0%,55%,100%{opacity:0}72%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.openfx.idle .olid,.openfx.idle .glow,.openfx.idle .swipehint i,.openfx.on .fpic{animation:none}.openfx.idle .swipehint i:nth-child(2){opacity:.8}}
