@@ -46,9 +46,10 @@
     });
     if (!arr.length) { box.append(el('p', 'muted', 'ยังไม่มีใครลงทะเบียนของขวัญ')); return; }
     var tierOf = makeTier(arr.map(function (g) { return g.price; }));
+    var listOnly = !!(opt && opt.listOnly);
     var head = el('div', 'pool-head');
     head.append(el('span', 'pool-total', String(arr.length)), el('span', 'muted', 'ใบ ของขวัญทั้งหมดในกล่อง'));
-    box.append(head);
+    if (!listOnly) box.append(head);
 
     var groups = {}, prices = [];
     arr.forEach(function (g) {
@@ -67,12 +68,17 @@
       r.append(lp, bar, el('span', 'tn', groups[p] + ' ใบ'));
       rows.append(r);
     });
-    box.append(rows);
+    if (!listOnly) box.append(rows);
     if (opt && opt.list === false) return;
 
+    var q = String((opt && opt.filter) || '').trim().toLowerCase();
+    var shown = q ? arr.filter(function (g) { return (String(g.prompt || '') + ' ' + g.no + ' ' + g.price).toLowerCase().indexOf(q) >= 0; }) : arr;
+    if (q) box.append(el('p', 'muted', 'พบ ' + shown.length + ' จาก ' + arr.length + ' ใบ'));
+    if (q && !shown.length) { box.append(el('p', 'muted', 'ไม่พบของขวัญที่ตรงกับคำค้น')); return; }
     var ul = el('ul', 'prizes');
-    arr.forEach(function (g) {
+    shown.forEach(function (g) {
       var t = TIERS[tierOf(g.price)], li = el('li');
+      if (opt && opt.open) li.classList.add('open');
       li.style.setProperty('--tc', t.hex); li.tabIndex = 0;
       li.append(el('span', 'pno', '#' + g.no));
       var meta = el('div', 'pmeta');

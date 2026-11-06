@@ -8,7 +8,7 @@ export default handler(async (req, res) => {
   if (req.method !== 'POST') return fail(res, 405, 'method');
   const b = req.body || {};
   const title = String(b.title || '').trim();
-  const idLabel = String(b.id_label || 'รหัสพนักงาน').trim() || 'รหัสพนักงาน';
+  const idLabel = String(b.id_label || 'รหัสประจำตัว').trim() || 'รหัสประจำตัว';
   if (!title || title.length > 60) return fail(res, 400, 'bad_title');
   if (idLabel.length > 20) return fail(res, 400, 'bad_id_label');
 

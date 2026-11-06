@@ -62,12 +62,6 @@ body{padding:0}
           <input type="text" id="cTitle" maxlength="60" placeholder="เช่น ปาร์ตี้ปีใหม่ แผนกบัญชี">
           <span class="ferr" id="eTitle" role="alert"></span>
         </div>
-        <div class="field">
-          <label class="lbl" for="cLabel">ให้ผู้เล่นระบุตัวตนด้วยอะไร</label>
-          <input type="text" id="cLabel" maxlength="20" value="รหัสพนักงาน">
-          <div class="btnrow" id="presets" style="margin-top:6px"></div>
-          <span class="hintx">ใช้กันคนเข้าห้องซ้ำ และให้ผู้จัดรีเซ็ตเมื่อใครเปลี่ยนเครื่อง</span>
-        </div>
         <span class="ferr" id="eCreate" role="alert"></span>
         <div class="btnrow"><button class="btn" type="submit" id="cSubmit">สร้างห้อง</button></div>
         <p class="hintx">ห้องและข้อมูลทุกคนจะถูกลบอัตโนมัติใน 30 วัน ผู้จัดลบเองได้ทุกเมื่อ</p>
@@ -99,25 +93,6 @@ body{padding:0}
       </details>
     </section>
 
-    <section class="narrow" id="v-done" hidden>
-      <h1 class="h">สร้างห้องแล้ว</h1>
-      <div class="panel">
-        <div class="muted">รหัสห้อง</div>
-        <div class="num" id="dCode" style="font-size:2.4rem;letter-spacing:.18em;font-weight:700"></div>
-        <div class="field">
-          <span class="lbl">ลิงก์ให้ผู้เล่น</span>
-          <input type="text" id="dPlayer" readonly>
-          <button type="button" class="btn small" id="cpP" style="justify-self:start">คัดลอก</button>
-        </div>
-        <div class="field">
-          <span class="lbl">ลิงก์ผู้จัด (เก็บไว้เอง)</span>
-          <input type="text" id="dHost" readonly>
-          <button type="button" class="btn ghost small" id="cpH" style="justify-self:start">คัดลอก</button>
-          <span class="hintx">ลิงก์นี้คือกุญแจคุมห้อง ไม่มีบัญชีให้กู้คืน ถ้าทำหาย จะเข้าคุมห้องนี้ไม่ได้อีก บันทึกไว้หรือส่งเข้าแชตตัวเอง ห้ามแจกให้ผู้เล่น</span>
-        </div>
-        <div class="btnrow"><a class="btn" id="dGo" href="#">ไปห้องควบคุม</a></div>
-      </div>
-    </section>
   </main>
 </div>
 <div class="toast" id="toast" role="status"></div>
@@ -126,14 +101,7 @@ body{padding:0}
 (function () {
 'use strict';
 var $ = function (s) { return document.querySelector(s); };
-var toast = window.GD.toast;
 
-['รหัสพนักงาน', 'รหัสนักเรียน', 'เลขที่', 'ชื่อเล่น', 'เบอร์โทรท้ายสี่ตัว'].forEach(function (t) {
-  var b = document.createElement('button');
-  b.type = 'button'; b.className = 'btn ghost small'; b.textContent = t;
-  b.addEventListener('click', function () { $('#cLabel').value = t; });
-  $('#presets').append(b);
-});
 
 function myRooms() {
   try { return JSON.parse(localStorage.getItem('gc-rooms') || '[]'); } catch (e) { return []; }
@@ -155,7 +123,6 @@ var ERR = {
   rate_limited: 'สร้างห้องบ่อยเกินไป ลองใหม่อีกชั่วโมง',
   full: 'ระบบเต็มชั่วคราว ลองใหม่ภายหลัง',
   bad_title: 'ใส่ชื่องาน (ไม่เกิน 60 ตัวอักษร)',
-  bad_id_label: 'ชื่อเรียกรหัสยาวเกิน 20 ตัวอักษร',
   missing_env: 'ระบบยังตั้งค่าไม่ครบ (ผู้ดูแลเว็บต้องตั้งค่า Supabase ใน Vercel)'
 };
 $('#createForm').addEventListener('submit', async function (e) {
@@ -166,7 +133,7 @@ $('#createForm').addEventListener('submit', async function (e) {
   $('#cSubmit').disabled = true;
   var r = {}, st = 0;
   try {
-    var res = await fetch('/api/create-room', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ title: title, id_label: $('#cLabel').value }) });
+    var res = await fetch('/api/create-room', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ title: title }) });
     st = res.status; r = await res.json();
   } catch (x) {}
   $('#cSubmit').disabled = false;
@@ -177,21 +144,8 @@ $('#createForm').addEventListener('submit', async function (e) {
     list.unshift({ code: r.code, title: title, expires: new Date(Date.now() + 30 * 864e5).toISOString() });
     localStorage.setItem('gc-rooms', JSON.stringify(list.slice(0, 20)));
   } catch (x) {}
-  var base = location.origin;
-  $('#dCode').textContent = r.code;
-  $('#dPlayer').value = base + '/r/' + r.code;
-  $('#dHost').value = base + '/host/' + r.code + '#k=' + r.key;
-  $('#dGo').href = '/host/' + r.code + '#k=' + r.key;
-  $('#v-home').hidden = true; $('#v-done').hidden = false;
-  window.scrollTo(0, 0);
+  location.href = '/host/' + r.code + '#k=' + r.key + '&new=1';
 });
-async function copy(id, msg) {
-  var v = $(id).value;
-  try { await navigator.clipboard.writeText(v); toast(msg); } catch (e) { $(id).select(); }
-}
-$('#cpP').addEventListener('click', function () { copy('#dPlayer', 'คัดลอกลิงก์ผู้เล่นแล้ว'); });
-$('#cpH').addEventListener('click', function () { copy('#dHost', 'คัดลอกลิงก์ผู้จัดแล้ว เก็บไว้ให้ดี'); });
-
 $('#joinForm').addEventListener('submit', function (e) {
   e.preventDefault();
   var c = $('#jCode').value.trim().toUpperCase();
