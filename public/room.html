@@ -189,7 +189,7 @@ async function boot() {
   }
   document.title = 'Giftcard · ห้อง ' + CODE;
   await refresh();
-  S.timer = setInterval(refresh, 4000);
+  S.timer = setInterval(function () { if (!document.hidden) refresh(); }, 10000);
   document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(); });
 }
 async function api(path, body) {

@@ -6,5 +6,6 @@ export default handler(async (req, res) => {
   const room = await getRoom(req.query.code);
   if (!room) return fail(res, 404, 'not_found');
   const { count } = await db().from('players').select('emp_id', { count: 'exact', head: true }).eq('room_id', room.id);
-  return send(res, 200, { id: room.id, title: room.title, id_label: room.id_label, phase: room.phase, players: count || 0 });
+  res.setHeader('Cache-Control', 's-maxage=5, stale-while-revalidate=10');
+  res.status(200).json({ id: room.id, title: room.title, id_label: room.id_label, phase: room.phase, players: count || 0 });
 });

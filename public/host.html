@@ -210,7 +210,7 @@ function enter() {
   setTimeout(function () { $('#stBody').classList.add('on'); }, 150);
   if (isNew) $('#saveBox').hidden = false;
   clearInterval(timer);
-  timer = setInterval(function () { if (!document.hidden && !busy) load(); }, 4000);
+  timer = setInterval(function () { if (!document.hidden && !busy) load(); }, 10000);
 }
 
 /* ---------- แสดงผล ---------- */
