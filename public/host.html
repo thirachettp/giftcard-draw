@@ -102,8 +102,8 @@ body{padding:0}
     <h2 class="h2" id="gifts" style="scroll-margin-top:16px">ใครลงทะเบียนของขวัญแล้วบ้าง</h2>
     <div class="admin-row" style="align-items:center">
       <div class="field srch" style="flex:1;min-width:200px;margin:0">
-        <label class="sr" for="giftQ">ค้นหาชื่อ</label>
-        <input type="text" id="giftQ" placeholder="ค้นหาชื่อหรือของขวัญ เช่น น้ำ" autocomplete="off">
+        <label class="sr" for="giftQ">ค้นหาชื่อ เบอร์ ผู้ให้ หรือผู้จับได้</label>
+        <input type="text" id="giftQ" placeholder="ค้นหาชื่อ เบอร์ ผู้ให้ หรือผู้จับได้" autocomplete="off">
       </div>
       <button type="button" class="btn ghost" id="aShowGift" aria-pressed="true">ซ่อนของขวัญ</button>
       <button type="button" class="btn ghost" id="aAddOpen">เพิ่มของขวัญ</button>
@@ -114,7 +114,8 @@ body{padding:0}
         <div class="field"><label class="lbl" for="addNick">ชื่อ</label><input type="text" id="addNick" maxlength="24"></div>
         <div class="field"><label class="lbl" for="addGift">ของขวัญคืออะไร</label><input type="text" id="addGift" maxlength="200"></div>
       </div>
-      <label class="switch"><input type="checkbox" id="addUn"> <span>ไม่ระบุ (กล่องปริศนา ?)</span></label>
+      <div class="field" id="addNoWrap"><label class="lbl" for="addNo">เบอร์ของขวัญ (เว้นว่าง = ต่อเลขอัตโนมัติ)</label><input type="text" inputmode="numeric" id="addNo" maxlength="4" style="max-width:8rem"></div>
+      <p class="hintx" style="margin:0">เว้นช่องของขวัญว่างไว้ = กล่องปริศนา ?</p>
       <p class="ferr" id="addErr" role="alert"></p>
       <div class="btnrow"><button class="btn" type="submit" id="addSubmit">เพิ่ม</button><button class="btn ghost" type="button" id="addCancel">ปิด</button></div>
     </form>
@@ -149,8 +150,8 @@ try {
   if (hm) { key = hm[1]; isNew = /new=1/.test(location.hash); try { localStorage.setItem(SK, key); } catch (e) {} history.replaceState(null, '', location.pathname); }
   else key = localStorage.getItem(SK) || '';
 } catch (e) {}
-var showGift = true;
-try { showGift = localStorage.getItem('gc-showgift') !== '0'; } catch (e) {}
+var showGift = false;
+try { showGift = localStorage.getItem('gc-showgift') === '1'; } catch (e) {}
 var D = null, timer = 0, busy = false, scene = null, animating = false;
 var origin = location.origin;
 var playerUrl = origin + '/r/' + CODE;
@@ -226,6 +227,8 @@ function arm(btn, k, label, confirmLabel, fn) {
   clearTimeout(armed[k]); armed[k] = 0; btn.textContent = label; fn();
 }
 function render() {
+  var ae = document.activeElement;
+  if (ae && ae.tagName === 'INPUT' && ae.closest && ae.closest('#aBody')) return;
   var room = D.room, drawn = room.phase === 'drawn', players = D.players.slice();
   var resBy = {}; D.results.forEach(function (r) { resBy[r.receiver_id] = r; });
   var opened = D.results.filter(function (r) { return r.opened_at; }).length;
@@ -262,11 +265,37 @@ function render() {
   hd.append(tr);
   var bd = $('#aBody'); bd.replaceChildren();
   var q = $('#giftQ').value.trim().toLowerCase();
-  players = players.filter(function (p) { return !q || p.nick.toLowerCase().indexOf(q) >= 0 || (p.gift_text || '').toLowerCase().indexOf(q) >= 0; });
+  var qn = q.replace(/^#/, '');
+  players = players.filter(function (p) {
+    if (!q) return true;
+    var res = resBy[p.id], mine = D.results.filter(function (x) { return x.giver_id === p.id; })[0];
+    var hay = [p.nick, String(p.gift_no), res ? nickOf(res.giver_id) : '', mine ? nickOf(mine.receiver_id) : '', showGift ? (p.gift_text || '') : ''].join('\n').toLowerCase();
+    return hay.indexOf(q) >= 0 || (qn && String(p.gift_no) === qn);
+  });
   if (!players.length) { var e = el('tr'), c = el('td', 'muted', D.players.length ? 'ไม่พบชื่อนี้' : 'ยังไม่มีใครลงทะเบียน'); c.colSpan = 9; e.append(c); bd.append(e); }
   players.forEach(function (p) {
     var res = resBy[p.id], row = el('tr');
-    row.append(el('td', null, p.nick), el('td', 'num', '#' + p.gift_no));
+    row.append(el('td', null, p.nick));
+    var ntd = el('td', 'num'), nspan = el('span', null, '#' + p.gift_no); ntd.append(nspan);
+    if (!drawn) {
+      var eb = el('button', 'mini plain', 'แก้'); eb.type = 'button'; eb.setAttribute('aria-label', 'แก้เบอร์ของ ' + p.nick); eb.style.marginLeft = '6px';
+      eb.addEventListener('click', function () {
+        var inp = el('input'); inp.type = 'text'; inp.inputMode = 'numeric'; inp.maxLength = 4; inp.value = p.gift_no; inp.style.cssText = 'width:4.5rem;padding:4px 8px';
+        var ok = el('button', 'mini', 'บันทึก'); ok.type = 'button'; var er = el('div', 'ferr'); er.setAttribute('role', 'alert');
+        ntd.replaceChildren(inp, ok, er); inp.focus(); inp.select();
+        async function save() {
+          var v = inp.value.trim();
+          if (!/^\d{1,4}$/.test(v) || +v < 1) { er.textContent = 'ใส่เลข 1–9999'; return; }
+          if (+v === p.gift_no) { inp.blur(); render(); return; }
+          ok.disabled = true; var r = await call('set-number', { id: p.id, gift_no: +v });
+          if (r.status === 200) { inp.blur(); toast('เปลี่ยนเบอร์ของ ' + p.nick + ' เป็น #' + v); load(); }
+          else { ok.disabled = false; er.textContent = r.error === 'no_taken' ? 'เบอร์นี้มีคนใช้แล้ว' : 'ไม่สำเร็จ ลองอีกครั้ง'; }
+        }
+        ok.addEventListener('click', save); inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); save(); } else if (e.key === 'Escape') { inp.blur(); render(); } });
+      });
+      ntd.append(eb);
+    }
+    row.append(ntd);
     var gc = el('td');
     if (showGift) {
       var gw = el('div'); gw.style.cssText = 'display:flex;align-items:center;gap:10px';
@@ -319,18 +348,19 @@ $('#aShowGift').addEventListener('click', toggleGift);
 syncShowBtn();
 $('#aAddOpen').addEventListener('click', function () { var f = $('#addForm'); f.hidden = !f.hidden; if (!f.hidden) $('#addNick').focus(); });
 $('#addCancel').addEventListener('click', function () { $('#addForm').hidden = true; });
-$('#addUn').addEventListener('change', function () { $('#addGift').disabled = this.checked; });
 $('#addForm').addEventListener('submit', async function (e) {
   e.preventDefault();
-  var nick = $('#addNick').value.trim(), gift = $('#addGift').value.trim(), un = $('#addUn').checked, er = $('#addErr');
+  var nick = $('#addNick').value.trim(), gift = $('#addGift').value.trim(), un = !gift, er = $('#addErr');
   er.textContent = '';
   if (!nick) { er.textContent = 'ใส่ชื่อก่อน'; return; }
-  if (!un && gift.length < 2) { er.textContent = 'บอกหน่อยว่าของขวัญคืออะไร หรือเลือก "ไม่ระบุ"'; return; }
+  if (gift && gift.length < 2) { er.textContent = 'พิมพ์อย่างน้อย 2 ตัวอักษร หรือเว้นว่างให้เป็นกล่องปริศนา'; return; }
+  var body = { nick: nick, gift_text: gift, unspecified: un, icon: G.guessIcon(gift, un) }, nv = $('#addNo').value.trim();
+  if (nv) { if (!/^\d{1,4}$/.test(nv) || +nv < 1) { er.textContent = 'เบอร์ต้องเป็นเลข 1–9999'; return; } body.gift_no = +nv; }
   $('#addSubmit').disabled = true;
-  var r = await call('add', { nick: nick, gift_text: gift, unspecified: un, icon: G.guessIcon(gift, un) });
+  var r = await call('add', body);
   $('#addSubmit').disabled = false;
-  if (r.status === 200) { $('#addNick').value = ''; $('#addGift').value = ''; $('#addUn').checked = false; $('#addGift').disabled = false; toast('เพิ่มของขวัญของ ' + nick + ' แล้ว'); load(); return; }
-  er.textContent = r.error === 'nick_taken' ? 'ชื่อนี้มีอยู่แล้วในห้อง' : r.error === 'already_drawn' ? 'จับฉลากแล้ว เพิ่มไม่ได้' : r.error === 'room_full' ? 'ห้องเต็มแล้ว' : 'เพิ่มไม่สำเร็จ ลองอีกครั้ง';
+  if (r.status === 200) { $('#addNick').value = ''; $('#addGift').value = ''; $('#addNo').value = ''; toast('เพิ่มของขวัญของ ' + nick + ' แล้ว'); load(); return; }
+  er.textContent = r.error === 'no_taken' ? 'เบอร์นี้มีคนใช้แล้ว' : r.error === 'nick_taken' ? 'ชื่อนี้มีอยู่แล้วในห้อง' : r.error === 'already_drawn' ? 'จับฉลากแล้ว เพิ่มไม่ได้' : r.error === 'room_full' ? 'ห้องเต็มแล้ว' : 'เพิ่มไม่สำเร็จ ลองอีกครั้ง';
 });
 $('#aTitleSave').addEventListener('click', async function () {
   var r = await call('settings', { title: $('#aTitle').value });

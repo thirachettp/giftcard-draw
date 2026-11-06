@@ -1,4 +1,4 @@
-import { db, send, fail, userFrom, getRoom, memberOf, ICONS, handler } from './_lib/logic.js';
+import { db, send, fail, userFrom, getRoom, memberOf, ICONS, parseNo, findByNick, handler } from './_lib/logic.js';
 
 const MAX_PLAYERS = 300;
 
@@ -21,12 +21,22 @@ export default handler(async (req, res) => {
   if (room.phase !== 'register') return fail(res, 403, 'closed');
 
   const sb = db();
+  const manual = room.number_mode === 'manual';
+  const wantNo = manual ? parseNo(b.gift_no) : null;
+  if (manual && wantNo == null) return fail(res, 400, 'bad_no');
   const me = await memberOf(room.id, uid);
   const fields = { nick, gift_text: giftText, unspecified, icon };
+  if (manual) fields.gift_no = wantNo;
+  const clash = async (e) => {
+    const m = String((e && e.message) || '');
+    if (m.includes('players_room_gift_uq')) return fail(res, 409, 'no_taken');
+    const o = await findByNick(room.id, nick);
+    return send(res, 409, { error: 'nick_taken', existing: o ? { id: o.id, no: o.gift_no, free: !o.user_id, mine: !!me && me.id === o.id } : null });
+  };
 
   if (me) {
     const up = await sb.from('players').update(fields).eq('id', me.id);
-    if (up.error) return up.error.code === '23505' ? fail(res, 409, 'nick_taken') : fail(res, 500, 'server_error');
+    if (up.error) return up.error.code === '23505' ? clash(up.error) : fail(res, 500, 'server_error');
     return send(res, 200, { ok: true, id: me.id });
   }
 
@@ -35,12 +45,13 @@ export default handler(async (req, res) => {
 
   for (let i = 0; i < 6; i++) {
     const { data: last } = await sb.from('players').select('gift_no').eq('room_id', room.id).order('gift_no', { ascending: false }).limit(1).maybeSingle();
-    const ins = await sb.from('players').insert({ room_id: room.id, user_id: uid, gift_no: (last ? last.gift_no : 0) + 1, ...fields }).select('id,gift_no').single();
+    const ins = await sb.from('players').insert({ room_id: room.id, user_id: uid, gift_no: manual ? wantNo : (last ? last.gift_no : 0) + 1, ...fields }).select('id,gift_no').single();
     if (!ins.error) return send(res, 200, { ok: true, id: ins.data.id, gift_no: ins.data.gift_no });
     const msg = String(ins.error.message || '');
     if (ins.error.code === '23505') {
-      if (msg.includes('players_room_nick_uq')) return fail(res, 409, 'nick_taken');
+      if (msg.includes('players_room_nick_uq')) return clash(ins.error);
       if (msg.includes('players_room_user_uq')) return fail(res, 409, 'device_has_other');
+      if (manual) return fail(res, 409, 'no_taken');
       continue; // เลขของขวัญชนกัน ลองใหม่
     }
     console.error(ins.error);

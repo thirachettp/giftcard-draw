@@ -7,6 +7,7 @@ const MAX_ROOMS = 5000;
 export default handler(async (req, res) => {
   if (req.method !== 'POST') return fail(res, 405, 'method');
   const title = String((req.body || {}).title || '').trim();
+  const mode = (req.body || {}).number_mode === 'manual' ? 'manual' : 'running';
   if (!title || title.length > 60) return fail(res, 400, 'bad_title');
 
   const sb = db();
@@ -19,7 +20,7 @@ export default handler(async (req, res) => {
 
   for (let i = 0; i < 6; i++) {
     const code = genCode(), key = genKey();
-    const ins = await sb.from('rooms').insert({ id: code, admin_hash: sha(key), title });
+    const ins = await sb.from('rooms').insert({ id: code, admin_hash: sha(key), title, number_mode: mode });
     if (!ins.error) {
       await sb.from('create_log').insert({ ip_hash: ip });
       await sb.rpc('bump_rooms_created');

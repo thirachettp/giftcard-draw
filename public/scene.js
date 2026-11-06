@@ -69,11 +69,41 @@
         a.onfinish = function () { g.style.transform = 'translate(' + to + 'px,0)'; res(); };
       });
     }
-    function F() { return belt.length > 3 ? .55 : 1; }
+    function F() { return (belt.length > 3 ? .7 : 1) * 1.5; }
+    var jobs = 0;
+    /* เอลฟ์แกล้งหลับ ซานต้าเดินมาปลุก */
+    async function nap(px) {
+      var lid = document.createElementNS(NS, 'g'), ey = FLOOR - 52;
+      lid.innerHTML = '<circle cx="-5.600" cy="' + ey + '" r="3.400" fill="#f1c9a0"/><circle cx="6" cy="' + ey + '" r="3.400" fill="#f1c9a0"/><path d="M-8.500 ' + ey + 'q2.900 3 5.800 0M3.100 ' + ey + 'q2.900 3 5.800 0" fill="none" stroke="#3a2614" stroke-width="1.600" stroke-linecap="round"/>';
+      var z = document.createElementNS(NS, 'text');
+      z.setAttribute('font-family', 'Noto Sans Thai,sans-serif'); z.setAttribute('font-weight', '700'); z.setAttribute('fill', '#cdbfe2'); z.setAttribute('font-size', '22'); z.setAttribute('x', 14); z.setAttribute('y', FLOOR - 104);
+      z.textContent = 'z z Z';
+      porter.append(lid, z);
+      if (z.animate) z.animate([{ transform: 'translate(0,0)', opacity: .4 }, { transform: 'translate(8px,-14px)', opacity: 1 }], { duration: 1100, iterations: Infinity, direction: 'alternate' });
+      await wait(2200);
+      var sx = Math.max(60, Math.min(1180, px + 90)), sg = document.createElementNS(NS, 'g');
+      sg.innerHTML = '<use href="#santa" x="0" y="' + (FLOOR - 86) + '" width="62" height="78"/><g id="gcSay" opacity="0"><rect x="-96" y="' + (FLOOR - 140) + '" width="150" height="30" rx="15" fill="#fff"/><text x="-21" y="' + (FLOOR - 120) + '" text-anchor="middle" font-family="Noto Sans Thai,sans-serif" font-size="14" font-weight="700" fill="#b3203a">ตื่นได้แล้ว!</text></g>';
+      svg.insertBefore(sg, fly);
+      var from = 1100;
+      sg.style.transform = 'translate(' + from + 'px,0)';
+      if (sg.animate) { var a = sg.animate([{ transform: 'translate(' + from + 'px,0)' }, { transform: 'translate(' + sx + 'px,-6px)', offset: .5 }, { transform: 'translate(' + sx + 'px,0)' }], { duration: 1500, easing: 'ease-in-out', fill: 'forwards' }); await new Promise(function (r) { a.onfinish = r; }); }
+      sg.style.transform = 'translate(' + sx + 'px,0)';
+      var say = sg.querySelector('#gcSay'); say.setAttribute('opacity', 1);
+      await wait(900);
+      z.remove(); lid.remove();
+      if (porter.animate) { var j = porter.animate([{ transform: 'translate(' + px + 'px,0)' }, { transform: 'translate(' + px + 'px,-26px)' }, { transform: 'translate(' + px + 'px,0)' }], { duration: 420, easing: 'ease-out' }); await new Promise(function (r) { j.onfinish = r; }); }
+      say.setAttribute('opacity', 0);
+      await wait(250);
+      if (sg.animate) { var b = sg.animate([{ transform: 'translate(' + sx + 'px,0)' }, { transform: 'translate(' + from + 'px,0)' }], { duration: 1500, easing: 'ease-in', fill: 'forwards' }); await new Promise(function (r) { b.onfinish = r; }); }
+      sg.remove();
+    }
     async function work() {
       if (working) return; working = true;
       var px = HOME;
       while (belt.length) {
+        if (!reduced && ++jobs >= 3 && Math.random() < .4) { jobs = 0; await nap(px); }
+        else if (!reduced) await wait(350);
+        if (!belt.length) break;
         var head = belt[0];
         while (!(head.x >= BELT_END - .5)) await wait(80);
         var idx = boxEls.length, canPlace = idx < SLOTS.length;

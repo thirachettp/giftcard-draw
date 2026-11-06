@@ -54,7 +54,7 @@ body{padding:0}
 .mine2{display:grid;gap:8px;list-style:none;padding:0;margin:10px 0 0}
 .mine2 a{display:flex;justify-content:space-between;gap:10px;text-decoration:none;text-align:left}
 .mine2 em{font-style:normal;font-size:.75rem;color:var(--gold)}
-</style>
+.nm{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid #3d2f58;border-radius:14px;cursor:pointer}.nm input{margin-top:5px}.nm span{display:grid;gap:2px}.nm small{color:#b0a3c9;font-size:.85rem}.nm:has(input:checked){border-color:#f4c24d;background:rgba(244,194,77,.08)}</style>
 </head>
 <body>
 <section class="hero" aria-labelledby="heroTitle">
@@ -75,12 +75,17 @@ body{padding:0}
 <div class="sheet" id="sheetCreate" hidden role="dialog" aria-modal="true" aria-label="สร้างห้องใหม่">
   <form class="in" id="createForm" autocomplete="off" novalidate>
     <button type="button" class="bk" data-close><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>กลับ</button>
-    <div><h1>สร้างห้องใหม่</h1><p class="sub2">ใส่ชื่องานแค่ช่องเดียว ที่เหลือระบบจัดให้</p></div>
+    <div><h1>สร้างห้องใหม่</h1><p class="sub2">ตั้งชื่องานและเลือกวิธีให้เบอร์ของขวัญ</p></div>
     <div class="card">
       <label style="display:grid;gap:8px;font-weight:500" for="cTitle">ชื่องาน
         <input class="big" type="text" id="cTitle" maxlength="60" placeholder="เช่น ปาร์ตี้ปีใหม่ แผนกบัญชี">
       </label>
       <span class="ferr" id="eTitle" role="alert"></span>
+      <fieldset class="numopt" style="border:0;padding:0;margin:0;display:grid;gap:8px">
+        <legend style="font-weight:500;padding:0 0 6px">เบอร์ของขวัญ</legend>
+        <label class="nm"><input type="radio" name="numMode" value="running" checked><span><b>Running อัตโนมัติ</b><small>ระบบรันเลข 1, 2, 3… ให้ตามลำดับการลงทะเบียน</small></span></label>
+        <label class="nm"><input type="radio" name="numMode" value="manual"><span><b>ให้ทุกคนกรอกเอง</b><small>เช่น เบอร์ที่ติดบนกล่องจริง · ผู้จัดแก้เลขให้ได้ภายหลัง</small></span></label>
+      </fieldset>
       <span class="ferr" id="eCreate" role="alert"></span>
       <button class="btn full" type="submit" id="cSubmit">สร้างห้อง</button>
       <div class="hintx">ห้องและข้อมูลทุกคนจะถูกลบอัตโนมัติใน 30 วัน ผู้จัดลบเองได้ทุกเมื่อ</div>
@@ -199,7 +204,7 @@ $('#createForm').addEventListener('submit', async function (e) {
   $('#cSubmit').disabled = true;
   var r = {}, st = 0;
   try {
-    var res = await fetch('/api/create-room', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ title: title }) });
+    var res = await fetch('/api/create-room', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ title: title, number_mode: ($('input[name=numMode]:checked') || {}).value || 'running' }) });
     st = res.status; r = await res.json();
   } catch (x) {}
   $('#cSubmit').disabled = false;

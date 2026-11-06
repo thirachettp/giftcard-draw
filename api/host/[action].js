@@ -1,4 +1,4 @@
-import { db, send, fail, isHost, getRoom, runDraw, ICONS, handler } from '../_lib/logic.js';
+import { db, send, fail, isHost, getRoom, runDraw, ICONS, parseNo, handler } from '../_lib/logic.js';
 
 /** คำสั่งของผู้จัดห้อง: ส่งรหัสห้องใน body และรหัสลับใน header x-admin-key */
 export default handler(async (req, res) => {
@@ -22,7 +22,7 @@ export default handler(async (req, res) => {
       ]);
       if (players.error || results.error) return fail(res, 500, 'server_error');
       return send(res, 200, {
-        room: { id: room.id, title: room.title, phase: room.phase, drawn_at: room.drawn_at, expires_at: room.expires_at },
+        room: { id: room.id, title: room.title, phase: room.phase, number_mode: room.number_mode || 'running', drawn_at: room.drawn_at, expires_at: room.expires_at },
         players: players.data.map(({ user_id, ...p }) => ({ ...p, bound: !!user_id })),
         results: results.data,
       });
@@ -46,16 +46,28 @@ export default handler(async (req, res) => {
       if ((n.count || 0) >= 300) return fail(res, 403, 'room_full');
       for (let i = 0; i < 6; i++) {
         const { data: last } = await sb.from('players').select('gift_no').eq('room_id', rid).order('gift_no', { ascending: false }).limit(1).maybeSingle();
-        const ins = await sb.from('players').insert({ room_id: rid, user_id: null, nick, gift_no: (last ? last.gift_no : 0) + 1, gift_text: giftText, unspecified, icon }).select('id').single();
+        const ins = await sb.from('players').insert({ room_id: rid, user_id: null, nick, gift_no: (b.gift_no != null && b.gift_no !== '' && parseNo(b.gift_no)) || (last ? last.gift_no : 0) + 1, gift_text: giftText, unspecified, icon }).select('id').single();
         if (!ins.error) return send(res, 200, { ok: true, id: ins.data.id });
         if (ins.error.code === '23505') {
           if (String(ins.error.message || '').includes('players_room_nick_uq')) return fail(res, 409, 'nick_taken');
+          if (b.gift_no != null && b.gift_no !== '') return fail(res, 409, 'no_taken');
           continue;
         }
         console.error(ins.error);
         return fail(res, 500, 'server_error');
       }
       return fail(res, 500, 'server_error');
+    }
+
+    case 'set-number': {
+      const n = parseNo(b.gift_no);
+      if (n == null) return fail(res, 400, 'bad_no');
+      const id = String(b.id || '');
+      const up = await sb.from('players').update({ gift_no: n }).eq('room_id', rid).eq('id', id).select('id');
+      if (up.error) return up.error.code === '23505' ? fail(res, 409, 'no_taken') : fail(res, 500, 'server_error');
+      if (!up.data.length) return fail(res, 404, 'not_found');
+      await sb.from('results').update({ gift_no: n }).eq('room_id', rid).eq('giver_id', id);
+      return send(res, 200, { ok: true });
     }
 
     case 'unbind': {

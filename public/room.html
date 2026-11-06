@@ -81,6 +81,13 @@
           <input type="text" id="fNick" maxlength="24">
           <span class="hintx">ชื่อเล่นหรืออะไรก็ได้ที่เพื่อนๆ จำได้</span>
           <span class="ferr" id="eNick" role="alert"></span>
+          <div class="sugg" id="fSugg" hidden></div>
+        </div>
+        <div class="field" id="fNoWrap" hidden>
+          <label class="lbl" for="fNo">เบอร์ของขวัญ</label>
+          <input type="text" inputmode="numeric" id="fNo" maxlength="4" style="max-width:8rem">
+          <span class="hintx">ห้องนี้ให้กรอกเบอร์เอง (1–9999) ห้ามซ้ำกับคนอื่น</span>
+          <span class="ferr" id="eNo" role="alert"></span>
         </div>
         <div class="giftrow">
           <div class="pvcol">
@@ -89,11 +96,14 @@
           </div>
           <div class="field" style="flex:1;min-width:0">
             <label class="lbl" for="fGift">ของขวัญคืออะไร</label>
-            <textarea id="fGift" maxlength="200" rows="3" placeholder="เช่น แก้วเซรามิกสีครีม"></textarea>
-            <label class="switch"><input type="checkbox" id="fUn"> <span>ไม่ระบุ (กล่องปริศนา ?)</span></label>
+            <textarea id="fGift" maxlength="200" rows="3" placeholder="เช่น แก้วเซรามิกสีครีม&#10;(ไม่พิมพ์ = กล่องปริศนา ?)"></textarea>
             <span class="ferr" id="eGift" role="alert"></span>
-            <span class="hintx" id="fPrevTxt"></span>
           </div>
+        </div>
+        <p class="hintx" id="fPrevTxt"></p>
+        <div class="field" id="fPickWrap">
+          <span class="lbl">เลือกรูปเอง</span>
+          <div class="picker" id="fPick" role="listbox" aria-label="เลือกรูปของขวัญ"></div>
         </div>
         <p class="ferr" id="eForm" role="alert"></p>
         <div class="btnrow">
@@ -366,42 +376,101 @@ async function startDraw() {
 }
 
 /* ---------- ฟอร์มลงทะเบียน ---------- */
-var F = { nick: $('#fNick'), gift: $('#fGift'), un: $('#fUn'), submit: $('#fSubmit') };
+var F = { nick: $('#fNick'), gift: $('#fGift'), no: $('#fNo'), submit: $('#fSubmit') };
 function setErr(id, m) { $('#' + id).textContent = m || ''; }
-var variant = 0;
-function curIcon() { return G.guessIcon(F.gift.value, F.un.checked) + (variant ? ':' + variant : ''); }
-function preview() {
-  $('#fPrev').innerHTML = G.iconSvg(curIcon(), 64);
-  $('#fPrevTxt').textContent = F.un.checked ? 'ไม่ระบุ: ผู้รับจะเห็นเป็นกล่องปริศนา ? จนกว่าจะเปิด' : 'ภาพแบนเรียบง่ายที่เลือกให้ตามชื่อของขวัญ ไม่ถูกใจกด "วาดใหม่" เพื่อเปลี่ยนสีและทิศทาง';
-  F.gift.disabled = F.un.checked;
+var variant = 0, iconPick = null;
+function isUn() { return !F.gift.value.trim(); }
+function curIcon() {
+  var base = isUn() ? 'mystery' : (iconPick || G.guessIcon(F.gift.value, false));
+  return base + (variant && base !== 'mystery' ? ':' + variant : '');
 }
+function preview() {
+  var un = isUn();
+  $('#fPrev').innerHTML = G.iconSvg(curIcon(), 64);
+  $('#fPrevTxt').textContent = un ? 'ไม่พิมพ์อะไร ผู้รับจะเห็นเป็นกล่องปริศนา ? จนกว่าจะเปิด' : 'เลือกรูปให้ตามชื่อของขวัญ ไม่ถูกใจกด "วาดใหม่" หรือเลือกรูปเองด้านล่าง';
+  $('#fRedraw').disabled = un; $('#fPickWrap').classList.toggle('dim', un);
+  var base = iconPick || G.guessIcon(F.gift.value, false);
+  Array.prototype.forEach.call($('#fPick').children, function (b) { b.setAttribute('aria-selected', !un && b.dataset.k === base ? 'true' : 'false'); });
+}
+(function buildPick() {
+  var box = $('#fPick');
+  G.ICON_LIST.forEach(function (k) {
+    var b = el('button', 'pk'); b.type = 'button'; b.dataset.k = k; b.setAttribute('role', 'option'); b.setAttribute('aria-label', k);
+    b.innerHTML = G.iconSvg(k, 34);
+    b.addEventListener('click', function () { if (isUn()) return; iconPick = k; preview(); });
+    box.append(b);
+  });
+})();
 $('#fRedraw').addEventListener('click', function () { var n; do { n = Math.floor(Math.random() * 10); } while (n === variant); variant = n; preview(); var pv = $('#fPrev'); pv.animate([{ transform: 'rotate(-8deg) scale(.85)', opacity: .3 }, { transform: 'none', opacity: 1 }], { duration: 350, easing: 'ease-out' }); });
-F.gift.addEventListener('input', preview); F.un.addEventListener('change', preview);
+F.gift.addEventListener('input', function () { iconPick = iconPick; preview(); });
 var formFor = null;
+function clearSugg() { var s = $('#fSugg'); s.hidden = true; s.innerHTML = ''; }
 function ensureForm() {
   var key = S.me ? S.me.id : 'new';
   if (formFor === key) return;
   formFor = key;
-  ['eNick', 'eGift', 'eForm'].forEach(function (i) { setErr(i, ''); });
-  F.nick.value = S.me ? S.me.nick : (S.prefillNick || ''); F.gift.value = S.me ? S.me.gift_text : ''; F.un.checked = S.me ? S.me.unspecified : false;
-  variant = S.me ? G.parseIcon(S.me.icon).v : 0;
+  ['eNick', 'eNo', 'eGift', 'eForm'].forEach(function (i) { setErr(i, ''); }); clearSugg();
+  F.nick.value = S.me ? S.me.nick : (S.prefillNick || ''); F.gift.value = S.me && !S.me.unspecified ? S.me.gift_text : '';
+  var ic = S.me ? G.parseIcon(S.me.icon) : { key: null, v: 0 };
+  variant = ic.v || 0; iconPick = ic.key && ic.key !== 'mystery' && ICON_OK(ic.key) ? ic.key : null;
+  var manual = S.room.number_mode === 'manual';
+  $('#fNoWrap').hidden = !manual; F.no.value = S.me && manual ? S.me.gift_no : '';
   $('#formTitle').textContent = S.me ? 'แก้ข้อมูลของคุณ' : 'ลงทะเบียนของขวัญ';
   F.submit.textContent = S.me ? 'บันทึก' : 'ลงทะเบียน';
   preview();
 }
+function ICON_OK(k) { return G.ICON_LIST.indexOf(k) >= 0; }
 $('#fCancel').addEventListener('click', function () { S.editing = false; S.formOpen = false; S.prefillNick = ''; formFor = null; route(); });
-var ERR = { nick_taken: 'ชื่อนี้มีคนใช้แล้วในห้อง ลองเพิ่มนามสกุลหรือตัวเลข', closed: 'จับฉลากแล้ว ปิดรับลงทะเบียนแล้ว', room_full: 'ห้องนี้เต็มแล้ว (สูงสุด 300 คน)', device_has_other: 'เครื่องนี้ผูกกับรายชื่ออื่นอยู่แล้ว' };
+var ERR = { nick_taken: 'ชื่อนี้มีคนใช้แล้วในห้อง', no_taken: 'เบอร์นี้มีคนใช้แล้ว ลองเบอร์อื่น', bad_no: 'ใส่เบอร์เป็นตัวเลข 1–9999', closed: 'จับฉลากแล้ว ปิดรับลงทะเบียนแล้ว', room_full: 'ห้องนี้เต็มแล้ว (สูงสุด 300 คน)', device_has_other: 'เครื่องนี้ผูกกับรายชื่ออื่นอยู่แล้ว' };
+var NICKS = ['', '2', 'ตัวจริง', 'ตัวน้อย', 'จากบัญชี', 'ใจดี'];
+function showDup(nick, ex) {
+  var box = $('#fSugg'); box.innerHTML = ''; box.hidden = false;
+  if (ex) {
+    var q = el('div', 'dupq');
+    q.append(el('b', null, 'มี "' + nick + '" ในห้องนี้แล้ว · ของขวัญ #' + ex.no), el('div', 'hintx', 'ใช่ของคุณไหม?'));
+    var row = el('div', 'btnrow');
+    if (ex.mine) { q.append(el('div', 'hintx', 'นี่คือรายชื่อของเครื่องนี้อยู่แล้ว')); }
+    else if (ex.free) {
+      var y = el('button', 'btn small', 'ใช่ เป็นของฉัน'); y.type = 'button';
+      y.addEventListener('click', async function () {
+        y.disabled = true; var r = await api('/api/claim', { id: ex.id });
+        if (r.status === 200) { S.editing = false; S.formOpen = false; formFor = null; toast('เปลี่ยนมาใช้ ' + nick + ' แล้ว'); await refresh(true); }
+        else { y.disabled = false; setErr('eForm', r.error === 'device_has_other' ? ERR.device_has_other : 'ผูกไม่สำเร็จ ลองอีกครั้ง'); }
+      });
+      row.append(y);
+    } else { q.append(el('div', 'hintx', 'ชื่อนี้ถูกใช้บนอีกเครื่องอยู่ ถ้าเป็นของคุณให้ผู้จัดห้องกด "ปลดเครื่อง" ก่อน')); }
+    box.append(q, row);
+  }
+  box.append(el('div', 'hintx', ex && !ex.mine ? 'ไม่ใช่ของคุณ? ลองใช้ชื่ออื่น เช่น' : 'ลองเพิ่มฉายาท้ายชื่อ เช่น'));
+  var chips = el('div', 'chips');
+  NICKS.slice(1).concat(['ที่ ' + (((S.room.players || []).length) + 1)]).forEach(function (s) {
+    var c = el('button', 'chip', nick + (s.length === 1 ? '' : ' ') + s); c.type = 'button';
+    c.addEventListener('click', function () { F.nick.value = c.textContent; clearSugg(); setErr('eNick', ''); F.nick.focus(); });
+    chips.append(c);
+  });
+  box.append(chips);
+}
+F.nick.addEventListener('input', clearSugg);
 $('#f').addEventListener('submit', async function (e) {
   e.preventDefault();
-  ['eNick', 'eGift', 'eForm'].forEach(function (i) { setErr(i, ''); });
-  var nick = F.nick.value.trim(), gift = F.gift.value.trim(), un = F.un.checked, ok = true;
+  ['eNick', 'eNo', 'eGift', 'eForm'].forEach(function (i) { setErr(i, ''); }); clearSugg();
+  var nick = F.nick.value.trim(), gift = F.gift.value.trim(), un = !gift, ok = true;
+  var manual = S.room.number_mode === 'manual', no = parseInt(F.no.value, 10);
   if (!nick) { setErr('eNick', 'ใส่ชื่อก่อน'); ok = false; }
-  if (!un && gift.length < 2) { setErr('eGift', 'บอกหน่อยว่าของขวัญคืออะไร หรือเลือก "ไม่ระบุ"'); ok = false; }
+  if (gift && gift.length < 2) { setErr('eGift', 'พิมพ์อย่างน้อย 2 ตัวอักษร หรือเว้นว่างให้เป็นกล่องปริศนา'); ok = false; }
+  if (manual && !(no >= 1 && no <= 9999 && /^\d+$/.test(F.no.value.trim()))) { setErr('eNo', ERR.bad_no); ok = false; }
   if (!ok) return;
+  var low = nick.toLowerCase();
+  var dup = (S.room.players || []).filter(function (p) { return p.nick.toLowerCase() === low && (!S.me || p.id !== S.me.id); })[0];
+  if (dup) { setErr('eNick', 'ชื่อนี้มีในห้องแล้ว'); showDup(nick, { id: dup.id, no: dup.no, free: dup.free, mine: false }); return; }
   F.submit.disabled = true;
-  var r = await api('/api/join', { nick: nick, gift_text: gift, unspecified: un, icon: curIcon() });
+  var body = { nick: nick, gift_text: gift, unspecified: un, icon: curIcon() };
+  if (manual) body.gift_no = no;
+  var r = await api('/api/join', body);
   F.submit.disabled = false;
   if (r.status === 200) { S.editing = false; S.formOpen = false; formFor = null; toast('บันทึกแล้ว'); await refresh(true); return; }
+  if (r.error === 'nick_taken') { setErr('eNick', 'ชื่อนี้มีในห้องแล้ว'); showDup(nick, r.existing); return; }
+  if (r.error === 'no_taken') { setErr('eNo', ERR.no_taken); return; }
   setErr('eForm', ERR[r.error] || 'บันทึกไม่สำเร็จ ลองอีกครั้ง');
 });
 
@@ -443,49 +512,73 @@ var fxParts = [], fxRun = false;
 function openBox() {
   var r = S.myRes; if (!r) return;
   var already = !!r.opened_at;
+  var myNick = S.me ? S.me.nick : '';
+  var giver = (playerOf(r.giver_id) || {}).nick || '-';
   var ov = el('div', 'openfx'); ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', 'เปิดกล่องของขวัญ');
-  var head = el('p', null, already ? 'นี่คือการ์ดของฉัน' : 'นี่คือกล่องของฉัน · แตะเพื่อเปิด'); head.style.cssText = 'font-size:1.1rem;color:#cdbfe2;margin:18px 0 0;text-align:center';
+  var who = el('p', 'who', myNick ? 'ของขวัญของ ' + myNick : '');
+  var head = el('p', 'ohead', already ? '' : 'ลากฝากล่องขึ้นเพื่อแง้มดู · ปัดขึ้นสุดเพื่อเปิด');
   var st = el('div', 'stage2');
   var card = el('div', 'ocard');
   var pic = el('div', 'pic'); pic.innerHTML = G.iconSvg(r.icon, 96);
-  var giver = (playerOf(r.giver_id) || {}).nick || '-';
-  var myNick = S.me ? S.me.nick : 'ฉัน';
-  card.append(el('div', 'mychip', 'นี่คือการ์ดของฉัน · ' + myNick), pic, el('div', 'no', '#' + r.gift_no), el('p', null, r.unspecified || !r.gift_text ? 'ของขวัญปริศนา (ผู้ให้ไม่ระบุ)' : r.gift_text));
+  card.append(pic, el('div', 'no', '#' + r.gift_no), el('p', null, r.unspecified || !r.gift_text ? 'ของขวัญปริศนา (ผู้ให้ไม่ระบุ)' : r.gift_text));
   var from = el('p', 'from'); from.append(document.createTextNode('ได้รับของขวัญของ '), el('b', null, giver)); card.append(from);
-  var ob = el('div', 'obody'); ob.append(el('span', 'oname', 'กล่องของ ' + myNick));
-  st.append(el('div', 'glow'), card, ob, el('div', 'olid'));
+  var bn = el('div', 'bignum'); bn.append(el('small', null, 'เบอร์ของขวัญของคุณ'), el('b', null, '#' + r.gift_no));
+  var ob = el('div', 'obody'); ob.append(el('span', 'oname', 'กล่องของ ' + (myNick || 'ฉัน')));
+  var lid = el('div', 'olid'), glow = el('div', 'glow');
+  st.append(glow, card, bn, ob, lid);
   var tip = el('p', 'savetip', 'แนะนำให้บันทึกภาพหน้าจอนี้เก็บไว้ จะได้ไม่ลืมว่าได้ของขวัญของใคร'); tip.hidden = true;
   var acts = el('div', 'acts'), close = el('button', 'btn ghost', 'ปิด'); close.type = 'button';
   var save = el('button', 'btn', 'บันทึกภาพ'); save.type = 'button'; save.hidden = true; save.addEventListener('click', function () { saveImage(r, giver); });
   acts.append(save, close);
   var cv = el('canvas'); cv.setAttribute('aria-hidden', 'true');
-  ov.append(head, st, tip, acts, cv); document.body.append(ov); document.body.style.overflow = 'hidden';
+  ov.append(who, head, st, tip, acts, cv); document.body.append(ov); document.body.style.overflow = 'hidden';
   function done() { fxParts = []; ov.remove(); document.body.style.overflow = ''; route(); }
   close.addEventListener('click', done);
   ov.addEventListener('keydown', function (e) { if (e.key === 'Escape') done(); });
-  function reveal() {
-    ov.classList.add('on'); head.textContent = 'นี่คือการ์ดของฉัน · เบอร์ #' + r.gift_no; tip.hidden = false; save.hidden = false;
+  function showCard() { ov.classList.remove('num'); ov.classList.add('on'); head.textContent = ''; tip.hidden = false; save.hidden = false; close.focus(); }
+  if (already) { ov.classList.add('on'); tip.hidden = false; save.hidden = false; close.focus(); return; }
+  var opened = false, btn = el('button', 'btn', 'เปิดกล่อง'); btn.type = 'button'; acts.prepend(btn);
+  function go() {
+    if (opened || S.myRes.opened_at) return; opened = true;
+    S.myRes.opened_at = new Date().toISOString();
+    btn.remove(); lid.style.transition = ''; lid.style.transform = ''; glow.style.opacity = '';
+    head.textContent = 'เปิดแล้ว!'; ov.classList.add('num');
     $('#live').textContent = 'ของขวัญของคุณคือเบอร์ ' + r.gift_no;
     confetti(cv);
-  }
-  if (already) { ov.classList.add('on'); head.textContent = 'นี่คือการ์ดของฉัน · เบอร์ #' + r.gift_no; tip.hidden = false; save.hidden = false; close.focus(); return; }
-  var btn = el('button', 'btn', 'เปิดกล่อง'); btn.type = 'button'; acts.prepend(btn);
-  function go() {
-    if (S.myRes.opened_at) return;
-    S.myRes.opened_at = new Date().toISOString();
-    btn.remove(); reveal();
+    setTimeout(function () { head.textContent = ''; showCard(); }, reduced ? 600 : 2200);
     sb.from('results').update({ opened_at: S.myRes.opened_at }).eq('room_id', CODE).eq('receiver_id', S.me.id).then(function (x) {
       if (x && x.error) toast('บันทึกสถานะการเปิดไม่สำเร็จ แต่ผลของคุณยังอยู่');
       else refresh(true);
     });
   }
-  btn.addEventListener('click', go); st.addEventListener('click', go); btn.focus();
+  /* ลากฝาขึ้นเพื่อแง้ม: ปล่อยก่อนถึงเกณฑ์ ฝาเด้งกลับ ถึงเกณฑ์/ปัดเร็ว = เปิด */
+  var y0 = null, t0 = 0, lift = 0, TH = 110;
+  function setLift(v) {
+    lift = Math.max(0, Math.min(170, v));
+    lid.style.transform = 'translate(' + (-lift * .25) + 'px,' + (-lift * .5) + 'px) rotate(' + (-lift * .2) + 'deg)';
+    glow.style.opacity = Math.min(.8, lift / 130);
+    head.textContent = lift > 8 && lift < TH ? 'แง้มดูนิดนึง… ลากขึ้นอีกเพื่อเปิด' : (lift >= TH ? 'ปล่อยเพื่อเปิด!' : 'ลากฝากล่องขึ้นเพื่อแง้มดู · ปัดขึ้นสุดเพื่อเปิด');
+  }
+  st.style.touchAction = 'none';
+  st.addEventListener('pointerdown', function (e) { if (opened) return; y0 = e.clientY; t0 = performance.now(); lid.style.transition = 'none'; try { st.setPointerCapture(e.pointerId); } catch (x) {} });
+  st.addEventListener('pointermove', function (e) { if (y0 == null || opened) return; setLift(y0 - e.clientY); });
+  function release(e) {
+    if (y0 == null || opened) return;
+    var fast = (y0 - e.clientY) / Math.max(60, performance.now() - t0) > .6 && lift > 40;
+    y0 = null;
+    if (lift >= TH || fast) { go(); return; }
+    lid.style.transition = 'transform .55s cubic-bezier(.3,1.7,.5,1)'; glow.style.transition = 'opacity .4s';
+    setLift(0); lift = 0; head.textContent = 'ลากฝากล่องขึ้นเพื่อแง้มดู · ปัดขึ้นสุดเพื่อเปิด';
+  }
+  st.addEventListener('pointerup', release); st.addEventListener('pointercancel', release);
+  btn.addEventListener('click', go); btn.focus();
 }
 function saveImage(r, giver) {
   var W = 720, H = 960, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   var c = cv.getContext('2d');
   var g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#1a1230'); g.addColorStop(1, '#4a2350'); c.fillStyle = g; c.fillRect(0, 0, W, H);
-  c.textAlign = 'center'; c.fillStyle = '#f4c24d'; c.font = '700 34px "Noto Sans Thai",sans-serif'; c.fillText(S.room.title, W / 2, 90, W - 80);
+  c.textAlign = 'center'; c.fillStyle = '#f4c24d'; c.font = '700 34px "Noto Sans Thai",sans-serif'; c.fillText(S.room.title, W / 2, 80, W - 80);
+  if (S.me) { c.fillStyle = '#f6effc'; c.font = '30px "Noto Sans Thai",sans-serif'; c.fillText('ของขวัญของ ' + S.me.nick, W / 2, 125, W - 80); }
   var svg = G.iconSvg(r.icon, 360).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ');
   var img = new Image();
   function finish() {

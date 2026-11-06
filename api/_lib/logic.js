@@ -29,7 +29,7 @@ export function cyclicPerm(n) {
   return a;
 }
 
-export const ICONS = ['cup', 'book', 'phones', 'plant', 'candle', 'snack', 'bag', 'toy', 'box', 'mystery'];
+export const ICONS = ['cup', 'book', 'phones', 'plant', 'candle', 'snack', 'bag', 'toy', 'box', 'mystery', 'shirt', 'socks', 'watch', 'bottle', 'camera', 'gamepad', 'lamp', 'wallet', 'perfume', 'umbrella', 'pen', 'candy', 'teapot', 'cake', 'soap', 'glasses'];
 
 /** ผู้เล่น (ของขวัญ) ของเครื่องนี้ในห้อง หรือ null */
 export async function memberOf(roomId, uid) {
@@ -114,4 +114,15 @@ export function handler(fn) {
       return fail(res, 500, 'server_error');
     }
   };
+}
+
+/** เลขของขวัญที่กรอกเอง (โหมด manual) ต้องเป็นจำนวนเต็ม 1-9999 */
+export function parseNo(v) {
+  const n = Number(v);
+  return Number.isInteger(n) && n >= 1 && n <= 9999 ? n : null;
+}
+/** หาคนที่ใช้ชื่อนี้อยู่ในห้อง (ไม่สนตัวพิมพ์เล็กใหญ่) */
+export async function findByNick(roomId, nick) {
+  const { data } = await db().from('players').select('id,gift_no,user_id,nick').eq('room_id', roomId).ilike('nick', nick.replace(/[%_\\]/g, '\\$&')).maybeSingle();
+  return data || null;
 }

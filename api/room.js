@@ -14,7 +14,7 @@ export default handler(async (req, res) => {
   if (pl.error || rs.error) return fail(res, 500, 'server_error');
   res.setHeader('Cache-Control', 's-maxage=5, stale-while-revalidate=10');
   res.status(200).json({
-    id: room.id, title: room.title, phase: room.phase, drawn_at: room.drawn_at,
+    id: room.id, title: room.title, phase: room.phase, number_mode: room.number_mode || 'running', drawn_at: room.drawn_at,
     players: pl.data.map((p) => ({ id: p.id, nick: p.nick, no: p.gift_no, free: !p.user_id })),
     results: (rs.data || []).map((r) => ({ to: r.receiver_id, from: r.opened_at ? r.giver_id : null, opened: !!r.opened_at })),
   });

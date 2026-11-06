@@ -13,6 +13,7 @@ create table if not exists public.rooms (
   admin_hash  text not null,
   title       text not null,
   phase       text not null default 'register' check (phase in ('register', 'drawn')),
+  number_mode text not null default 'running' check (number_mode in ('running', 'manual')),
   drawn_at    timestamptz,
   created_at  timestamptz not null default now(),
   expires_at  timestamptz not null default (now() + interval '30 days')
