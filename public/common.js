@@ -82,7 +82,12 @@
         var no = el('button', 'btn ghost', s.cancel || 'ยกเลิก'); no.type = 'button'; no.addEventListener('click', function () { finish(false); });
         var yes = el('button', 'btn' + (last && steps.length > 1 ? ' danger' : ''), s.ok || (last ? 'ยืนยัน' : 'ดำเนินการต่อ')); yes.type = 'button';
         yes.addEventListener('click', function () { if (last) finish(true); else { i++; draw(); } });
-        row.append(no, yes); card.append(row);
+        if (last && steps.length > 1) {
+          /* ขั้นสุดท้าย: สลับตำแหน่งปุ่ม และหน่วงสั้นๆ กันกดรัวทะลุจากขั้นก่อนหน้า */
+          row.append(yes, no);
+          yes.disabled = true; setTimeout(function () { yes.disabled = false; }, 900);
+        } else row.append(no, yes);
+        card.append(row);
         no.focus();
       }
       draw();

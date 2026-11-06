@@ -227,10 +227,15 @@ function renderMain() {
       }
     }
   } else if (me && S.myRes) {
-    var r = S.myRes, tile = el('button', 'btn' + (r.opened_at ? ' ghost' : ''), r.opened_at ? 'ดูของขวัญของฉันอีกครั้ง' : 'แตะเพื่อเปิดกล่องของฉัน');
-    tile.type = 'button'; tile.style.margin = '14px 0';
+    var r = S.myRes, tile = el('button', 'btn bounce', r.opened_at ? 'ดูของขวัญของฉันอีกครั้ง' : 'แตะเพื่อเปิดกล่องของฉัน');
+    tile.type = 'button';
     tile.addEventListener('click', function () { openBox(); });
-    mine.append(tile);
+    var trow = el('div', 'endrow');
+    if (r.opened_at) {
+      var home = el('a', 'btn ghost', 'กลับหน้าหลัก · ลองสร้างห้องเอง'); home.href = '/';
+      trow.append(home);
+    }
+    trow.append(tile); mine.append(trow);
     var got = R.results.filter(function (x) { return x.from === me.id; })[0];
     var gl = el('p', 'muted'); gl.style.margin = '0 0 10px';
     gl.append(document.createTextNode('ใครได้รับของขวัญของฉัน: '));
@@ -432,14 +437,16 @@ function openBox() {
   var r = S.myRes; if (!r) return;
   var already = !!r.opened_at;
   var ov = el('div', 'openfx'); ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', 'เปิดกล่องของขวัญ');
-  var head = el('p', null, already ? 'ของขวัญของคุณ' : 'แตะกล่องเพื่อเปิด'); head.style.cssText = 'font-size:1.1rem;color:#cdbfe2;margin:18px 0 0;text-align:center';
+  var head = el('p', null, already ? 'นี่คือการ์ดของฉัน' : 'นี่คือกล่องของฉัน · แตะเพื่อเปิด'); head.style.cssText = 'font-size:1.1rem;color:#cdbfe2;margin:18px 0 0;text-align:center';
   var st = el('div', 'stage2');
   var card = el('div', 'ocard');
   var pic = el('div', 'pic'); pic.innerHTML = G.iconSvg(r.icon, 96);
   var giver = (playerOf(r.giver_id) || {}).nick || '-';
-  card.append(pic, el('div', 'no', '#' + r.gift_no), el('p', null, r.unspecified || !r.gift_text ? 'ของขวัญปริศนา (ผู้ให้ไม่ระบุ)' : r.gift_text));
+  var myNick = S.me ? S.me.nick : 'ฉัน';
+  card.append(el('div', 'mychip', 'นี่คือการ์ดของฉัน · ' + myNick), pic, el('div', 'no', '#' + r.gift_no), el('p', null, r.unspecified || !r.gift_text ? 'ของขวัญปริศนา (ผู้ให้ไม่ระบุ)' : r.gift_text));
   var from = el('p', 'from'); from.append(document.createTextNode('ได้รับของขวัญของ '), el('b', null, giver)); card.append(from);
-  st.append(el('div', 'glow'), card, el('div', 'obody'), el('div', 'olid'));
+  var ob = el('div', 'obody'); ob.append(el('span', 'oname', 'กล่องของ ' + myNick));
+  st.append(el('div', 'glow'), card, ob, el('div', 'olid'));
   var tip = el('p', 'savetip', 'แนะนำให้บันทึกภาพหน้าจอนี้เก็บไว้ จะได้ไม่ลืมว่าได้ของขวัญของใคร'); tip.hidden = true;
   var acts = el('div', 'acts'), close = el('button', 'btn ghost', 'ปิด'); close.type = 'button';
   var save = el('button', 'btn', 'บันทึกภาพ'); save.type = 'button'; save.hidden = true; save.addEventListener('click', function () { saveImage(r, giver); });
@@ -450,11 +457,11 @@ function openBox() {
   close.addEventListener('click', done);
   ov.addEventListener('keydown', function (e) { if (e.key === 'Escape') done(); });
   function reveal() {
-    ov.classList.add('on'); head.textContent = 'ของขวัญของคุณคือเบอร์ #' + r.gift_no; tip.hidden = false; save.hidden = false;
+    ov.classList.add('on'); head.textContent = 'นี่คือการ์ดของฉัน · เบอร์ #' + r.gift_no; tip.hidden = false; save.hidden = false;
     $('#live').textContent = 'ของขวัญของคุณคือเบอร์ ' + r.gift_no;
     confetti(cv);
   }
-  if (already) { ov.classList.add('on'); head.textContent = 'ของขวัญของคุณคือเบอร์ #' + r.gift_no; tip.hidden = false; save.hidden = false; close.focus(); return; }
+  if (already) { ov.classList.add('on'); head.textContent = 'นี่คือการ์ดของฉัน · เบอร์ #' + r.gift_no; tip.hidden = false; save.hidden = false; close.focus(); return; }
   var btn = el('button', 'btn', 'เปิดกล่อง'); btn.type = 'button'; acts.prepend(btn);
   function go() {
     if (S.myRes.opened_at) return;
