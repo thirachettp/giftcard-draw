@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Giftcard · จับฉลากของขวัญ</title>
 <meta name="description" content="สร้างห้องจับฉลากแลกของขวัญ ทุกคนเปิดการ์ดของตัวเองบนมือถือพร้อมกัน ไม่ต้องสมัครสมาชิก">
 <meta name="theme-color" content="#15101f">
@@ -54,12 +54,13 @@ body{padding:0}
 .mine2{display:grid;gap:8px;list-style:none;padding:0;margin:10px 0 0}
 .mine2 a{display:flex;justify-content:space-between;gap:10px;text-decoration:none;text-align:left}
 .mine2 em{font-style:normal;font-size:.75rem;color:var(--gold)}
-.nm{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid #3d2f58;border-radius:14px;cursor:pointer}.nm input{margin-top:5px}.nm span{display:grid;gap:2px}.nm small{color:#b0a3c9;font-size:.85rem}.nm:has(input:checked){border-color:#f4c24d;background:rgba(244,194,77,.08)}</style>
+.nm{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid #3d2f58;border-radius:14px;cursor:pointer}.nm input{margin-top:5px}.nm span{display:grid;gap:2px}.nm small{color:#b0a3c9;font-size:.85rem}.nm:has(input:checked){border-color:#f4c24d;background:rgba(244,194,77,.08)}.shareapp{position:absolute;top:max(14px,env(safe-area-inset-top));right:max(14px,env(safe-area-inset-right));z-index:3}</style>
 </head>
 <body>
 <section class="hero" aria-labelledby="heroTitle">
   <svg class="scene" id="scene" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMax slice" aria-hidden="true"></svg>
   <div class="hero-brand"><span class="brand-mark pattern" aria-hidden="true"></span><b>Giftcard</b></div>
+  <button type="button" class="btn ghost small shareapp" id="shareApp" aria-label="แชร์แอปนี้">แชร์แอป</button>
   <div class="hero-body">
     <span class="eyebrow">จับฉลากของขวัญ</span>
     <h1 id="heroTitle">Gift<em>card</em></h1>
@@ -152,6 +153,11 @@ function sheet(id, focusSel) {
   setTimeout(function () { var f = $(focusSel); if (f) f.focus({ preventScroll: true }); }, 50);
 }
 function closeSheet() { if (openSheet) { openSheet.hidden = true; openSheet = null; } }
+$('#shareApp').addEventListener('click', async function () {
+  var d = { title: 'Giftcard · จับฉลากของขวัญ', text: 'สร้างห้องจับฉลากแลกของขวัญปีใหม่ แชร์ลิงก์ให้เพื่อนเข้าร่วมได้เลย', url: location.origin + '/' };
+  try { if (navigator.share) { await navigator.share(d); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(d.url); GD.toast('คัดลอกลิงก์แอปแล้ว ส่งให้เพื่อนได้เลย'); } catch (e) { window.prompt('คัดลอกลิงก์นี้', d.url); }
+});
 $('#goCreate').addEventListener('click', function () { sheet('#sheetCreate', '#cTitle'); });
 $('#goJoin').addEventListener('click', function () { sheet('#sheetJoin', '#codeBox input'); });
 document.querySelectorAll('[data-close]').forEach(function (b) { b.addEventListener('click', closeSheet); });

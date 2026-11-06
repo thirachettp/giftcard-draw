@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Giftcard · ห้องจับฉลาก</title>
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,6 +36,7 @@
 </style>
 </head>
 <body>
+<div class="bgscene" id="bgScene" aria-hidden="true" hidden></div>
 <div class="bgwrap" id="bg" aria-hidden="true"></div>
 <div class="app roommain">
   <header class="top roomhead">
@@ -43,7 +44,7 @@
       <span class="brand-mark pattern" aria-hidden="true"></span>
       <div class="brand-name">Giftcard</div>
     </div>
-    <span class="roombadge" id="evPhase"></span>
+    <div class="hdr-r"><span class="roombadge" id="evPhase"></span><a class="btn ghost small homebtn" href="/" aria-label="กลับหน้าแรก">หน้าแรก</a></div>
   </header>
   <p class="net" id="net" hidden>เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ในตอนนี้ ข้อมูลที่เห็นอาจไม่ล่าสุด</p>
 
@@ -59,6 +60,12 @@
       <div class="hero2"><h1 id="mTitle"></h1><div class="bl">Giftcard</div></div>
       <div class="bigcount c2"><b id="mCount">0</b><span id="mCountLab"></span></div>
       <p class="muted" id="mSub" style="text-align:center;margin:0"></p>
+      <div class="tools" id="mTools"></div>
+      <div class="joincard2" id="mQr" hidden>
+        <div id="qr" aria-label="QR code เข้าห้อง"></div>
+        <div><div class="lab">รหัสเข้าห้อง</div><div class="code num" id="shCode"></div><div class="lnk" id="shLink"></div>
+        <div class="btnrow" style="margin-top:10px"><button type="button" class="btn small" id="cpPlayer">คัดลอกลิงก์เข้าห้อง</button><button type="button" class="btn ghost small" id="hSettings" hidden>ตั้งค่าห้อง</button></div></div>
+      </div>
       <div id="mMine"></div>
       <div class="panel2">
         <div class="pt" id="mPT">ใครลงทะเบียนของขวัญแล้วบ้าง</div>
@@ -116,14 +123,25 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="/common.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script src="/scene.js"></script>
+<script src="/host-panel.js"></script>
 <script>
 (async function () {
 'use strict';
 var G = window.GD, el = G.el, toast = G.toast;
 var $ = function (s) { return document.querySelector(s); };
 var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-var CODE = ((location.pathname.match(/\/r\/([A-Za-z0-9]+)/) || [])[1] || '').toUpperCase();
+var CODE = ((location.pathname.match(/\/(?:r|host)\/([A-Za-z0-9]+)/) || [])[1] || '').toUpperCase();
+var HKEY = '', HOST = false, ISNEW = false, SKEY = 'gc-host-' + CODE;
+try {
+  var hm = location.hash.match(/k=([A-Za-z0-9_-]+)/);
+  if (hm) { HKEY = hm[1]; ISNEW = /new=1/.test(location.hash); try { localStorage.setItem(SKEY, HKEY); } catch (e) {} }
+  else HKEY = localStorage.getItem(SKEY) || '';
+  if (/\/host\//.test(location.pathname) || hm) history.replaceState(null, '', '/r/' + CODE);
+} catch (e) {}
+HOST = !!HKEY;
+var QRON = HOST;
 var COLORS = ['#c8334b', '#2f9e7a', '#7a5cd6', '#3d8fd0', '#d9703a'];
 
 var S = { room: null, me: null, myRes: null, loaded: false, sig: '', q: '', editing: false, pin: '' };
@@ -147,7 +165,10 @@ async function boot() {
     if (r.error || !r.data.session) { block('เข้าระบบไม่ได้', 'แจ้งผู้จัดงานให้เปิด Anonymous sign-ins ใน Supabase (Authentication > Providers)'); return; }
   }
   document.title = 'Giftcard · ห้อง ' + CODE;
+  if (HOST) HostPanel.init({ code: CODE, key: HKEY, isNew: ISNEW, onChange: async function () { await refresh(true); HostPanel.refreshTable(); }, replay: function () { try { localStorage.removeItem('gc-anim-' + CODE); } catch (e) {} S.animating = false; maybeAnimate(); } });
   await refresh();
+  if (HOST && ISNEW && S.room) { setTimeout(function () { HostPanel.openSettings(); ISNEW = false; }, 400); }
+  if (HOST && S.room) { try { var hl = JSON.parse(localStorage.getItem('gc-rooms') || '[]').filter(function (x) { return x.code !== CODE; }); hl.unshift({ code: CODE, title: S.room.title, expires: HostPanel.D && HostPanel.D.room.expires_at }); localStorage.setItem('gc-rooms', JSON.stringify(hl.slice(0, 20))); } catch (e) {} }
   try { if (S.room) { var jl = JSON.parse(localStorage.getItem('gc-joined') || '[]').filter(function (x) { return x.code !== CODE; }); jl.unshift({ code: CODE, title: S.room.title }); localStorage.setItem('gc-joined', JSON.stringify(jl.slice(0, 20))); } } catch (e) {}
   setInterval(function () { if (!document.hidden) refresh(); }, 10000);
   document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(); });
@@ -175,7 +196,12 @@ async function refresh(force) {
   } catch (e) { netNote(true); return; }
   if (q.some(function (x) { return x.error; })) { netNote(true); if (!S.loaded) block('เชื่อมต่อฐานข้อมูลไม่ได้', 'ลองรีเฟรชหน้านี้ ถ้ายังไม่ได้ให้แจ้งผู้จัดงานตรวจว่ารัน schema.sql แล้ว'); return; }
   netNote(false);
-  var sig = JSON.stringify([q[0].data, q[1].data, q[2].data]);
+  if (HOST) {
+    var hs = await HostPanel.load();
+    if (hs.status === 401) { HOST = false; try { localStorage.removeItem(SKEY); } catch (e) {} toast('ลิงก์ผู้จัดไม่ถูกต้อง เข้าห้องแบบผู้เล่นแทน'); }
+    else if (hs.status === 404) { HOST = false; }
+  }
+  var sig = JSON.stringify([q[0].data, q[1].data, q[2].data, HOST && HostPanel.D ? [HostPanel.D.players, HostPanel.D.results] : 0, HOST, HostPanel.isShowGift && HostPanel.isShowGift()]);
   var first = !S.loaded;
   S.room = q[0].data; S.me = q[1].data; S.myRes = q[2].data; S.loaded = true;
   if (first || force || sig !== S.sig) { S.sig = sig; route(); }
@@ -185,13 +211,59 @@ async function refresh(force) {
 function route() {
   $('#mTitle').textContent = S.room.title;
   $('#evPhase').textContent = 'ห้อง ' + CODE;
-  if (window.GCScene) GCScene.bgBoxes($('#bg'), S.room.players.length);
+  syncBg();
   if (S.room.phase === 'drawn') S.editing = false;
   if (S.editing || (S.formOpen && !S.me && S.room.phase === 'register')) { show('form'); ensureForm(); return; }
   show('main'); renderMain();
   maybeAnimate();
   maybeAutoOpen();
 }
+
+/* ---------- พื้นหลัง: ก่อนจับ = โกดังซานต้า / หลังจับ = กล่องของทุกคน ---------- */
+var scn = null, scnN = -1;
+function syncBg() {
+  var R = S.room, drawn = R.phase === 'drawn', bs = $('#bgScene'), bg = $('#bg');
+  if (!drawn && window.GCScene && !reduced) {
+    bs.hidden = false; bg.hidden = true;
+    if (!scn) { try { scn = GCScene.mount(bs, { count: R.players.length }); scnN = R.players.length; } catch (e) { scn = null; } }
+    else if (!S.animating && R.players.length !== scnN) {
+      if (R.players.length > scnN && scnN >= 0 && R.players.length - scnN <= 6) R.players.slice(scnN).forEach(function (p) { scn.arrive(p.nick); });
+      else scn.setCount(R.players.length);
+      scnN = R.players.length;
+    }
+  } else {
+    bs.hidden = true; bg.hidden = false; if (scn) { bs.replaceChildren(); scn = null; scnN = -1; }
+    if (window.GCScene) GCScene.bgBoxes(bg, R.players.length);
+  }
+}
+
+/* ---------- QR / เครื่องมือ ---------- */
+var qrDone = false;
+function renderTools() {
+  var R = S.room, drawn = R.phase === 'drawn', t = $('#mTools'); t.replaceChildren();
+  if (!drawn) {
+    var qb = el('button', 'btn ghost small', QRON ? 'ซ่อน QR Code' : 'แสดง QR Code'); qb.type = 'button'; qb.setAttribute('aria-pressed', String(QRON));
+    qb.addEventListener('click', function () { QRON = !QRON; renderTools(); });
+    t.append(qb);
+  } else QRON = false;
+  if (HOST) {
+    var ms = el('button', 'btn ghost small', 'จัดการรายชื่อ'); ms.type = 'button'; ms.addEventListener('click', function () { HostPanel.openManage(); });
+    var gs = el('button', 'btn ghost small', HostPanel.isShowGift() ? 'ซ่อนของขวัญ' : 'แสดงของขวัญ'); gs.type = 'button'; gs.setAttribute('aria-pressed', String(HostPanel.isShowGift()));
+    gs.addEventListener('click', function () { HostPanel.setShowGift(!HostPanel.isShowGift()); });
+    var st = el('button', 'btn ghost small', 'ตั้งค่าห้อง'); st.type = 'button'; st.addEventListener('click', function () { HostPanel.openSettings(); });
+    t.append(gs, ms); if (!QRON) t.append(st);
+  }
+  var q = $('#mQr'); q.hidden = !QRON || drawn;
+  if (!q.hidden) {
+    $('#shCode').textContent = CODE; $('#shLink').textContent = location.origin + '/r/' + CODE;
+    if (window.qrcode && !qrDone) {
+      try { var qq = qrcode(0, 'M'); qq.addData(location.origin + '/r/' + CODE); qq.make(); $('#qr').innerHTML = qq.createSvgTag({ cellSize: 4, margin: 0, scalable: true }); var sv = $('#qr svg'); if (sv) { sv.setAttribute('width', 132); sv.setAttribute('height', 132); } qrDone = true; } catch (e) {}
+    }
+  }
+  $('#hSettings').hidden = !HOST;
+}
+$('#cpPlayer').addEventListener('click', function () { var u = location.origin + '/r/' + CODE; if (navigator.clipboard) navigator.clipboard.writeText(u).then(function () { toast('คัดลอกลิงก์ห้องแล้ว'); }, function () { window.prompt('คัดลอกลิงก์นี้', u); }); else window.prompt('คัดลอกลิงก์นี้', u); });
+$('#hSettings').addEventListener('click', function () { if (HOST) HostPanel.openSettings(); });
 
 /* ---------- หน้าห้อง (หน้าเดียว) ---------- */
 function renderMain() {
@@ -202,6 +274,7 @@ function renderMain() {
   $('#mPT').textContent = drawn ? 'กล่องของทุกคน' : 'ใครลงทะเบียนของขวัญแล้วบ้าง';
   $('#mCountLab').textContent = drawn ? 'กล่องที่เปิดแล้ว' : 'ของขวัญอยู่ในกล่องแล้ว';
 
+  renderTools();
   var mine = $('#mMine'); mine.replaceChildren();
   var free = $('#mFree'); free.replaceChildren();
   var cta = $('#mCta'); cta.replaceChildren();
@@ -260,7 +333,7 @@ function renderMain() {
 
   renderFinder();
 
-  if (me && !drawn) {
+  if ((me || HOST) && !drawn) {
     var go = el('button', 'btn', 'เริ่มจับฉลาก'); go.type = 'button'; go.disabled = pl.length < 2;
     go.addEventListener('click', startDraw);
     cta.append(go);
@@ -273,7 +346,15 @@ function renderFinder() {
   var R = S.room, drawn = R.phase === 'drawn', q = S.q.trim().toLowerCase();
   var res = $('#mRes'); res.replaceChildren();
   var list = $('#mList'); list.replaceChildren();
-  var pl = R.players.filter(function (p) { return !q || p.nick.toLowerCase().indexOf(q) >= 0; });
+  var qn = q.replace(/^#/, ''), byFrom = {}; R.results.forEach(function (r) { if (r.from) byFrom[r.from] = r; });
+  var hostD = HOST && HostPanel.D ? HostPanel.D : null, hp = {};
+  if (hostD) hostD.players.forEach(function (x) { hp[x.id] = x; });
+  var pl = R.players.filter(function (p) {
+    if (!q) return true;
+    var got = R.results.filter(function (r) { return r.to === p.id; })[0], sent = R.results.filter(function (r) { return r.from === p.id; })[0];
+    var hay = [p.nick, String(p.no), got && got.from ? (playerOf(got.from) || {}).nick : '', sent ? (playerOf(sent.to) || {}).nick : '', hostD && hp[p.id] && HostPanel.isShowGift() ? hp[p.id].gift_text : ''].join('\n').toLowerCase();
+    return hay.indexOf(q) >= 0 || (qn && String(p.no) === qn);
+  });
   $('#mMeta').textContent = pl.length + ' จาก ' + R.players.length + ' คน';
   if (q && !pl.length) {
     var nr = el('div', 'nores'), qq = S.q.trim();
@@ -295,8 +376,12 @@ function renderFinder() {
       li.append(el('span', 'av', p.nick.slice(0, 1)));
       var nm = el('span', 'nm', p.nick); if (isMe) nm.append(el('span', 'me', 'คุณ'));
       var okl = el('span', 'ok'); okl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>ลงทะเบียนแล้ว';
+      if (hostD && hp[p.id] && HostPanel.isShowGift()) {
+        var gp = el('span', 'gicon'); gp.innerHTML = G.iconSvg(hp[p.id].icon, 26); li.insertBefore(gp, li.children[1]);
+        nm.append(el('span', 'gtxt', ' · #' + p.no + ' ' + (hp[p.id].unspecified ? 'กล่องปริศนา' : hp[p.id].gift_text)));
+      } else if (hostD) nm.append(el('span', 'gtxt', ' · #' + p.no));
       li.append(nm, okl);
-      if (S.me) {
+      if (S.me || HOST) {
         var d = el('button', 'mini', 'ลบ'); d.type = 'button'; d.setAttribute('aria-label', 'ลบของขวัญของ ' + p.nick);
         d.addEventListener('click', function () { delGift(p); });
         li.append(d);
@@ -351,7 +436,7 @@ async function delGift(p) {
     { title: 'แน่ใจจริงๆ ใช่ไหม?', ok: 'ยืนยันลบ #' + p.no, cancel: 'ไม่ลบแล้ว', note: 'ลบแล้วกู้คืนไม่ได้ ' + (self ? 'และคุณจะต้องลงทะเบียนใหม่' : 'เจ้าของของขวัญต้องลงทะเบียนใหม่เอง') }
   ]);
   if (!ok) return;
-  var r = await api('/api/delete-gift', { id: p.id });
+  var r = (!S.me && HOST) ? await HostPanel.call('remove', { id: p.id }) : await api('/api/delete-gift', { id: p.id });
   if (r.status === 200) { toast('ลบแล้ว'); await refresh(true); }
   else toast(r.error === 'closed' ? 'จับฉลากไปแล้ว ลบไม่ได้' : 'ลบไม่สำเร็จ ลองอีกครั้ง');
 }
@@ -366,7 +451,8 @@ async function startDraw() {
       note: 'ผลสุ่มจะถูกสร้างทันที มีคน ' + n + ' คน และ ' + n + ' ของขวัญ ตรวจให้ครบแล้วหรือยัง? ใครมาช้าจะไม่ได้ร่วมรอบนี้ ถ้าต้องแก้ ผู้จัดห้องต้องกด "รีเซ็ตรอบ"' }
   ]);
   if (!ok) return;
-  var r = await api('/api/draw', {});
+  QRON = false; renderTools();
+  var r = HOST ? await HostPanel.call('draw', {}) : await api('/api/draw', {});
   if (r.status === 200 || r.error === 'already_drawn') { await refresh(true); }
   else toast(r.error === 'too_few' ? 'ต้องมีอย่างน้อย 2 คน' : 'จับฉลากไม่สำเร็จ ลองอีกครั้ง');
 }
@@ -503,8 +589,7 @@ function openBox() {
   var head = el('p', 'ohead', already ? '' : 'ลากฝากล่องขึ้นเพื่อแง้มดู · ปัดขึ้นสุดเพื่อเปิด');
   var st = el('div', 'stage2');
   var card = el('div', 'ocard');
-  var crow = el('div', 'crow'), sic = el('span', 'sic'); sic.innerHTML = G.iconSvg(r.icon, 38);
-  crow.append(sic, el('span', 'no', '#' + r.gift_no));
+  var crow = el('div', 'crow'); crow.append(el('span', 'no', '#' + r.gift_no));
   card.append(crow, el('p', 'gt2', r.unspecified || !r.gift_text ? 'ของขวัญปริศนา (ผู้ที่ไม่ระบุ)' : r.gift_text));
   var from = el('p', 'from'); from.append(document.createTextNode('จาก '), el('b', null, giver)); card.append(from);
   var fpic = el('div', 'fpic'); fpic.innerHTML = G.iconSvg(r.icon, 96);
@@ -522,7 +607,7 @@ function openBox() {
   function done() { fxParts = []; ov.remove(); document.body.style.overflow = ''; route(); }
   close.addEventListener('click', done);
   ov.addEventListener('keydown', function (e) { if (e.key === 'Escape') done(); });
-  function showCard() { ov.classList.remove('num'); ov.classList.add('on'); who.innerHTML = CROWN; who.append(document.createTextNode(' ' + (myNick || 'ฉัน') + ' จับได้ของ ' + giver)); head.textContent = S.room.title; tip.hidden = false; save.hidden = false; close.focus(); }
+  function showCard() { ov.classList.remove('num'); ov.classList.add('on'); who.textContent = (myNick || 'ฉัน') + ' จับได้ของ ' + giver; head.textContent = S.room.title; tip.hidden = false; save.hidden = false; close.focus(); }
   if (already) { ov.classList.remove('idle'); showCard(); tip.hidden = false; save.hidden = false; close.focus(); return; }
   var opened = false, btn = el('button', 'btn', 'เปิดกล่อง'); btn.type = 'button'; acts.prepend(btn);
   function go() {

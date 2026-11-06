@@ -70,7 +70,25 @@
       });
     }
     function F() { return (belt.length > 3 ? .7 : 1) * 1.5; }
-    var jobs = 0;
+    var jobs = 0, sleepFx = null, idleT = null;
+    function sleepOn() {
+      if (sleepFx || reduced || working) return;
+      var ey = FLOOR - 52, lid = document.createElementNS(NS, 'g');
+      lid.innerHTML = '<circle cx="-5.600" cy="' + ey + '" r="3.400" fill="#f1c9a0"/><circle cx="6" cy="' + ey + '" r="3.400" fill="#f1c9a0"/><path d="M-8.500 ' + ey + 'q2.900 3 5.800 0M3.100 ' + ey + 'q2.900 3 5.800 0" fill="none" stroke="#3a2614" stroke-width="1.600" stroke-linecap="round"/>';
+      var z = document.createElementNS(NS, 'text');
+      z.setAttribute('font-family', 'Noto Sans Thai,sans-serif'); z.setAttribute('font-weight', '700'); z.setAttribute('fill', '#cdbfe2'); z.setAttribute('font-size', '22'); z.setAttribute('x', 14); z.setAttribute('y', FLOOR - 104);
+      z.textContent = 'z z Z';
+      porter.append(lid, z);
+      if (z.animate) z.animate([{ transform: 'translate(0,0)', opacity: .4 }, { transform: 'translate(8px,-14px)', opacity: 1 }], { duration: 1100, iterations: Infinity, direction: 'alternate' });
+      sleepFx = { lid: lid, z: z };
+    }
+    function sleepOff() {
+      clearTimeout(idleT);
+      if (!sleepFx) return;
+      sleepFx.lid.remove(); sleepFx.z.remove(); sleepFx = null;
+      if (porter.animate) porter.animate([{ transform: 'translate(' + HOME + 'px,0)' }, { transform: 'translate(' + HOME + 'px,-24px)' }, { transform: 'translate(' + HOME + 'px,0)' }], { duration: 400, easing: 'ease-out' });
+    }
+    function armIdle() { clearTimeout(idleT); idleT = setTimeout(sleepOn, 12000); }
     /* เอลฟ์แกล้งหลับ ซานต้าเดินมาปลุก */
     async function nap(px) {
       var lid = document.createElementNS(NS, 'g'), ey = FLOOR - 52;
@@ -98,7 +116,7 @@
       sg.remove();
     }
     async function work() {
-      if (working) return; working = true;
+      if (working) return; working = true; sleepOff();
       var px = HOME;
       while (belt.length) {
         if (!reduced && ++jobs >= 3 && Math.random() < .4) { jobs = 0; await nap(px); }
@@ -131,7 +149,7 @@
         } else { carrying = 0; carryG.innerHTML = ''; }
         if (!belt.length) { await move(porter, px, HOME, Math.max(600, Math.abs(px - HOME) * 3.5), 8); px = HOME; }
       }
-      working = false;
+      working = false; armIdle();
     }
     function arrive(name) {
       total++;
@@ -141,7 +159,7 @@
       if (belt.length < 2) {
         var t = document.createElementNS(NS, 'g');
         t.innerHTML = '<rect x="-30" y="-58" width="116" height="30" rx="15" fill="#f4c24d"/><text x="28" y="-38" text-anchor="middle" font-family="Noto Sans Thai,sans-serif" font-size="14" font-weight="700" fill="#2a1606"></text>';
-        t.querySelector('text').textContent = (name || 'ของขวัญใหม่') + ' มาถึงแล้ว';
+        t.querySelector('text').textContent = (name || 'ใครสักคน') + ' ส่งของขวัญ';
         g.appendChild(t);
       }
       var it = { g: g, x: -110, tx: BELT_END, c: c };
@@ -163,6 +181,7 @@
     }
     /* กล่องจากชั้นวางย้ายเข้ารถเลื่อน รถเลื่อนบินขึ้นฟ้า แล้วกล่องร่วงลงมาแจก */
     function deliver(done, onPhase) {
+      sleepOff(); clearTimeout(idleT);
       var total = boxEls.length, ph = function (n) { if (onPhase) onPhase(n); };
       if (reduced || !svg.animate) { ph(3); if (done) done(); return; }
       var S = sleigh(), SX = 420, SY = 470;
@@ -214,6 +233,7 @@
       }
     }
     setCount(opt.count || 0);
+    armIdle();
     return { setCount: setCount, arrive: arrive, deliver: deliver, svg: svg, capacity: SLOTS.length };
   }
 
