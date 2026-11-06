@@ -21,7 +21,13 @@ export default handler(async (req, res) => {
 
   for (let i = 0; i < 6; i++) {
     const code = genCode(), key = genKey();
-    const ins = await sb.from('rooms').insert({ id: code, admin_hash: sha(key), title, number_mode: mode, reveal_mode: reveal });
+    let ins = await sb.from('rooms').insert({ id: code, admin_hash: sha(key), title, number_mode: mode, reveal_mode: reveal });
+    // ฐานข้อมูลยังไม่ได้รัน migrate (ไม่มีคอลัมน์ใหม่): ถ้าเลือกค่าเริ่มต้นก็สร้างแบบเดิมได้ ถ้าไม่ก็บอกให้อัปเดต
+    if (ins.error && ['PGRST204', '42703'].includes(ins.error.code)) {
+      console.error('db_outdated', ins.error.message);
+      if (mode !== 'running' || reveal !== 'names') return fail(res, 500, 'db_outdated');
+      ins = await sb.from('rooms').insert({ id: code, admin_hash: sha(key), title });
+    }
     if (!ins.error) {
       await sb.from('create_log').insert({ ip_hash: ip });
       await sb.rpc('bump_rooms_created');
