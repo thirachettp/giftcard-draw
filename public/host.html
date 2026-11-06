@@ -86,15 +86,6 @@ body{padding:0}
       <div class="btnrow"><button type="button" class="btn small" id="cpHost2">คัดลอกลิงก์ผู้จัด</button><button type="button" class="btn ghost small" id="saveClose">เก็บแล้ว</button></div>
     </div>
 
-    <section class="gifts-sec" id="gifts" style="scroll-margin-top:16px">
-      <h2 class="h2" style="margin-top:0">ใครลงทะเบียนของขวัญแล้วบ้าง</h2>
-      <div class="field srch">
-        <label class="sr" for="giftQ">ค้นหาชื่อ</label>
-        <input type="text" id="giftQ" placeholder="ค้นหาชื่อ เช่น น้ำ" autocomplete="off">
-      </div>
-      <ul class="who" id="giftList"></ul>
-    </section>
-
     <div class="titlebox">
       <label class="sr" for="aTitle">ชื่องาน</label>
       <input type="text" id="aTitle" maxlength="60">
@@ -108,6 +99,25 @@ body{padding:0}
       <button type="button" class="btn ghost" id="aReset">รีเซ็ตรอบ</button>
     </div>
     <p class="muted" id="aMsg" role="status" style="min-height:1.6em;margin-bottom:14px"></p>
+    <h2 class="h2" id="gifts" style="scroll-margin-top:16px">ใครลงทะเบียนของขวัญแล้วบ้าง</h2>
+    <div class="admin-row" style="align-items:center">
+      <div class="field srch" style="flex:1;min-width:200px;margin:0">
+        <label class="sr" for="giftQ">ค้นหาชื่อ</label>
+        <input type="text" id="giftQ" placeholder="ค้นหาชื่อหรือของขวัญ เช่น น้ำ" autocomplete="off">
+      </div>
+      <button type="button" class="btn ghost" id="aShowGift" aria-pressed="true">ซ่อนของขวัญ</button>
+      <button type="button" class="btn ghost" id="aAddOpen">เพิ่มของขวัญ</button>
+    </div>
+    <form id="addForm" class="panel" autocomplete="off" hidden style="margin:12px 0">
+      <p class="hintx" style="margin:0">เพิ่มของขวัญแทนคนที่ยังไม่ได้ลงทะเบียน (เครื่องจะยังไม่ผูก เจ้าของเข้าห้องแล้วเลือกชื่อนี้เพื่อรับสิทธิ์ได้)</p>
+      <div class="row2">
+        <div class="field"><label class="lbl" for="addNick">ชื่อ</label><input type="text" id="addNick" maxlength="24"></div>
+        <div class="field"><label class="lbl" for="addGift">ของขวัญคืออะไร</label><input type="text" id="addGift" maxlength="200"></div>
+      </div>
+      <label class="switch"><input type="checkbox" id="addUn"> <span>ไม่ระบุ (กล่องปริศนา ?)</span></label>
+      <p class="ferr" id="addErr" role="alert"></p>
+      <div class="btnrow"><button class="btn" type="submit" id="addSubmit">เพิ่ม</button><button class="btn ghost" type="button" id="addCancel">ปิด</button></div>
+    </form>
     <div class="tablewrap">
       <table>
         <thead id="aHead"></thead>
@@ -139,6 +149,8 @@ try {
   if (hm) { key = hm[1]; isNew = /new=1/.test(location.hash); try { localStorage.setItem(SK, key); } catch (e) {} history.replaceState(null, '', location.pathname); }
   else key = localStorage.getItem(SK) || '';
 } catch (e) {}
+var showGift = true;
+try { showGift = localStorage.getItem('gc-showgift') !== '0'; } catch (e) {}
 var D = null, timer = 0, busy = false, scene = null, animating = false;
 var origin = location.origin;
 var playerUrl = origin + '/r/' + CODE;
@@ -226,16 +238,6 @@ function render() {
   if (scene && !animating) scene.setCount(players.length);
   $('#aExpire').textContent = 'ห้องนี้จะถูกลบอัตโนมัติ (รวมข้อมูลทุกคน) ในวันที่ ' + new Date(room.expires_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' }) + ' ดาวน์โหลด CSV เก็บไว้ก่อนถ้าต้องการ';
 
-  /* ค้นหาชื่อ พร้อมภาพของขวัญ */
-  var q = $('#giftQ').value.trim().toLowerCase(), ul = $('#giftList'); ul.replaceChildren();
-  var shown = players.filter(function (p) { return !q || p.nick.toLowerCase().indexOf(q) >= 0 || (p.gift_text || '').toLowerCase().indexOf(q) >= 0; });
-  if (!shown.length) ul.append(el('li', 'muted', players.length ? 'ไม่พบชื่อนี้' : 'ยังไม่มีใครลงทะเบียน'));
-  shown.forEach(function (p) {
-    var li = el('li'), th = el('span', 'thumb'); th.innerHTML = G.iconSvg(p.icon, 36);
-    var nm = el('span', 'nm'); nm.append(el('div', null, p.nick), el('div', 'gt2', p.unspecified ? 'ไม่ระบุ (กล่องปริศนา)' : p.gift_text));
-    li.append(th, nm, el('span', 'gn', '#' + p.gift_no)); ul.append(li);
-  });
-
   var st = $('#aStats'); st.replaceChildren();
   [[players.length, 'คนลงทะเบียน']].concat(drawn ? [[opened + '/' + D.results.length, 'เปิดกล่องแล้ว']] : []).forEach(function (x) {
     var d = el('div'); d.append(el('b', null, String(x[0])), document.createTextNode(x[1])); st.append(d);
@@ -248,14 +250,21 @@ function render() {
 
   var hd = $('#aHead'); hd.replaceChildren();
   var tr = el('tr');
-  ['ชื่อ', 'เบอร์', 'ของขวัญ', 'เครื่อง'].concat(drawn ? ['ได้ของขวัญของ', 'เปิดแล้ว'] : []).concat(['จัดการ']).forEach(function (t) { tr.append(el('th', null, t)); });
+  ['ชื่อ', 'เบอร์'].concat(showGift ? ['ของขวัญ'] : []).concat(['เครื่อง']).concat(drawn ? ['ได้ของขวัญของ', 'เปิดแล้ว'] : []).concat(['จัดการ']).forEach(function (t) { tr.append(el('th', null, t)); });
   hd.append(tr);
   var bd = $('#aBody'); bd.replaceChildren();
-  if (!players.length) { var e = el('tr'), c = el('td', 'muted', 'ยังไม่มีใครลงทะเบียน'); c.colSpan = 7; e.append(c); bd.append(e); }
+  var q = $('#giftQ').value.trim().toLowerCase();
+  players = players.filter(function (p) { return !q || p.nick.toLowerCase().indexOf(q) >= 0 || (p.gift_text || '').toLowerCase().indexOf(q) >= 0; });
+  if (!players.length) { var e = el('tr'), c = el('td', 'muted', D.players.length ? 'ไม่พบชื่อนี้' : 'ยังไม่มีใครลงทะเบียน'); c.colSpan = 7; e.append(c); bd.append(e); }
   players.forEach(function (p) {
     var res = resBy[p.id], row = el('tr');
-    row.append(el('td', null, p.nick), el('td', 'num', '#' + p.gift_no), el('td', null, p.unspecified ? 'ไม่ระบุ' : p.gift_text),
-      el('td', p.bound ? 'ok' : 'warn', p.bound ? 'ผูกแล้ว' : 'ปลดแล้ว รอเข้าใหม่'));
+    row.append(el('td', null, p.nick), el('td', 'num', '#' + p.gift_no));
+    if (showGift) {
+      var gc = el('td'), gw = el('div'); gw.style.cssText = 'display:flex;align-items:center;gap:10px';
+      var th = el('span', 'thumb'); th.innerHTML = G.iconSvg(p.icon, 30); th.style.cssText = 'width:40px;height:40px;border-radius:10px;background:#241a38;display:grid;place-items:center;flex:none';
+      gw.append(th, el('span', null, p.unspecified ? 'ไม่ระบุ (กล่องปริศนา)' : p.gift_text)); gc.append(gw); row.append(gc);
+    }
+    row.append(el('td', p.bound ? 'ok' : 'warn', p.bound ? 'ผูกแล้ว' : 'ยังไม่ผูก รอเจ้าของเข้า'));
     if (drawn) row.append(el('td', null, res ? nickOf(res.giver_id) : '-'), el('td', res && res.opened_at ? 'ok' : 'muted', res && res.opened_at ? 'เปิดแล้ว' : 'ยังไม่เปิด'));
     var act = el('td'), box = el('div', 'cell-actions');
     var rb = el('button', 'btn ghost small', 'ปลดเครื่อง'); rb.type = 'button'; rb.disabled = !p.bound;
@@ -294,6 +303,24 @@ function render() {
 }
 
 /* ---------- ปุ่มต่าง ๆ ---------- */
+function syncShowBtn() { var b = $('#aShowGift'); b.textContent = showGift ? 'ซ่อนของขวัญ' : 'แสดงของขวัญ'; b.setAttribute('aria-pressed', String(showGift)); }
+$('#aShowGift').addEventListener('click', function () { showGift = !showGift; try { localStorage.setItem('gc-showgift', showGift ? '1' : '0'); } catch (e) {} syncShowBtn(); if (D) render(); });
+syncShowBtn();
+$('#aAddOpen').addEventListener('click', function () { var f = $('#addForm'); f.hidden = !f.hidden; if (!f.hidden) $('#addNick').focus(); });
+$('#addCancel').addEventListener('click', function () { $('#addForm').hidden = true; });
+$('#addUn').addEventListener('change', function () { $('#addGift').disabled = this.checked; });
+$('#addForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  var nick = $('#addNick').value.trim(), gift = $('#addGift').value.trim(), un = $('#addUn').checked, er = $('#addErr');
+  er.textContent = '';
+  if (!nick) { er.textContent = 'ใส่ชื่อก่อน'; return; }
+  if (!un && gift.length < 2) { er.textContent = 'บอกหน่อยว่าของขวัญคืออะไร หรือเลือก "ไม่ระบุ"'; return; }
+  $('#addSubmit').disabled = true;
+  var r = await call('add', { nick: nick, gift_text: gift, unspecified: un, icon: G.guessIcon(gift, un) });
+  $('#addSubmit').disabled = false;
+  if (r.status === 200) { $('#addNick').value = ''; $('#addGift').value = ''; $('#addUn').checked = false; $('#addGift').disabled = false; toast('เพิ่มของขวัญของ ' + nick + ' แล้ว'); load(); return; }
+  er.textContent = r.error === 'nick_taken' ? 'ชื่อนี้มีอยู่แล้วในห้อง' : r.error === 'already_drawn' ? 'จับฉลากแล้ว เพิ่มไม่ได้' : r.error === 'room_full' ? 'ห้องเต็มแล้ว' : 'เพิ่มไม่สำเร็จ ลองอีกครั้ง';
+});
 $('#aTitleSave').addEventListener('click', async function () {
   var r = await call('settings', { title: $('#aTitle').value });
   toast(r.status === 200 ? 'บันทึกแล้ว' : 'บันทึกไม่สำเร็จ'); load();

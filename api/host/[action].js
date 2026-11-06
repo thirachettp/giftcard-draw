@@ -1,4 +1,4 @@
-import { db, send, fail, isHost, getRoom, runDraw, handler } from '../_lib/logic.js';
+import { db, send, fail, isHost, getRoom, runDraw, ICONS, handler } from '../_lib/logic.js';
 
 /** คำสั่งของผู้จัดห้อง: ส่งรหัสห้องใน body และรหัสลับใน header x-admin-key */
 export default handler(async (req, res) => {
@@ -31,6 +31,31 @@ export default handler(async (req, res) => {
     case 'draw': {
       const r = await runDraw(room);
       return r.ok ? send(res, 200, r) : fail(res, r.status, r.error);
+    }
+
+    case 'add': {
+      if (room.phase !== 'register') return fail(res, 409, 'already_drawn');
+      const nick = String(b.nick || '').trim();
+      const unspecified = !!b.unspecified;
+      const giftText = unspecified ? '' : String(b.gift_text || '').trim();
+      const [ik, iv] = String(b.icon || '').split(':');
+      const icon = ICONS.includes(ik) ? ik + (/^[1-9]$/.test(iv || '') ? ':' + iv : '') : (unspecified ? 'mystery' : 'box');
+      if (!nick || nick.length > 24) return fail(res, 400, 'bad_nick');
+      if (!unspecified && (giftText.length < 2 || giftText.length > 200)) return fail(res, 400, 'bad_gift');
+      const n = await sb.from('players').select('id', { count: 'exact', head: true }).eq('room_id', rid);
+      if ((n.count || 0) >= 300) return fail(res, 403, 'room_full');
+      for (let i = 0; i < 6; i++) {
+        const { data: last } = await sb.from('players').select('gift_no').eq('room_id', rid).order('gift_no', { ascending: false }).limit(1).maybeSingle();
+        const ins = await sb.from('players').insert({ room_id: rid, user_id: null, nick, gift_no: (last ? last.gift_no : 0) + 1, gift_text: giftText, unspecified, icon }).select('id').single();
+        if (!ins.error) return send(res, 200, { ok: true, id: ins.data.id });
+        if (ins.error.code === '23505') {
+          if (String(ins.error.message || '').includes('players_room_nick_uq')) return fail(res, 409, 'nick_taken');
+          continue;
+        }
+        console.error(ins.error);
+        return fail(res, 500, 'server_error');
+      }
+      return fail(res, 500, 'server_error');
     }
 
     case 'unbind': {
