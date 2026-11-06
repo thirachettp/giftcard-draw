@@ -11,8 +11,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Chonburi&family=Noto+Sans+Thai:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/style.css">
 <style>
+html,body{height:100%;overflow:hidden}
 body{padding:0}
-.hero{position:relative;min-height:100svh;display:grid;place-items:center;overflow:hidden;isolation:isolate;background:#1a0f1c}
+.hero{position:relative;height:100svh;min-height:520px;display:grid;place-items:center;overflow:hidden;isolation:isolate;background:#1a0f1c}
 .hero svg.scene{position:absolute;inset:0;width:100%;height:100%;z-index:-2}
 .hero::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(60% 46% at 50% 44%,rgba(21,16,31,.78) 0%,rgba(21,16,31,.42) 60%,transparent 100%),linear-gradient(180deg,rgba(21,16,31,.45) 0%,transparent 28%,transparent 70%,rgba(21,16,31,.55) 100%)}
 .hero-brand{position:absolute;top:max(18px,env(safe-area-inset-top));left:max(18px,env(safe-area-inset-left));display:flex;align-items:center;gap:10px}
@@ -35,6 +36,24 @@ body{padding:0}
 .run{animation:run 16s linear infinite}
 @keyframes run{from{transform:translateX(-160px)}to{transform:translateX(1360px)}}
 @media (prefers-reduced-motion:reduce){.tw,.belt,.run{animation:none}}
+
+.sheet{position:fixed;inset:0;z-index:50;overflow:auto;background:radial-gradient(520px 360px at 85% -6%,#3b1a46 0%,transparent 62%),#15101f;padding:max(18px,env(safe-area-inset-top)) 22px 28px}
+.sheet[hidden]{display:none}
+.sheet .in{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.sheet .bk{appearance:none;background:none;border:0;color:#cdbfe2;font:inherit;font-size:.95rem;display:inline-flex;align-items:center;gap:6px;min-height:44px;align-self:flex-start;cursor:pointer;padding:0}
+.sheet h1{margin:0;font-family:var(--font-display);font-weight:400;font-size:1.9rem;line-height:1.25;color:var(--gold)}
+.sheet .sub2{margin:6px 0 0;color:#b0a3c9}
+.sheet .card{background:#1e1630;border:1px solid #3d2f58;border-radius:14px;padding:20px;display:grid;gap:14px}
+.sheet .card input.big{box-sizing:border-box;width:100%;height:50px;background:#15101f;border:2px solid var(--gold);color:var(--text);border-radius:10px;padding:0 14px;font:inherit;font-size:1rem}
+.sheet .btn.full{display:block;width:100%;box-sizing:border-box;text-align:center;font-weight:700;font-size:1.05rem;padding:.8em 0}
+.codebox{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.codebox input{box-sizing:border-box;width:100%;aspect-ratio:1/1.15;text-align:center;font:inherit;font-weight:700;font-size:1.6rem;text-transform:uppercase;background:#15101f;border:2px solid #3d2f58;color:var(--text);border-radius:10px;padding:0}
+.codebox input:focus{border-color:var(--gold);outline:0}
+.steps2{font-size:.95rem;color:#cdbfe2;line-height:1.7}
+.steps2 div{display:flex;gap:10px}.steps2 span.n{color:var(--gold)}
+.mine2{display:grid;gap:8px;list-style:none;padding:0;margin:10px 0 0}
+.mine2 a{display:flex;justify-content:space-between;gap:10px;text-decoration:none;text-align:left}
+.mine2 em{font-style:normal;font-size:.75rem;color:var(--gold)}
 </style>
 </head>
 <body>
@@ -46,55 +65,49 @@ body{padding:0}
     <h1 id="heroTitle">Gift<em>card</em></h1>
     <p class="sub">ทุกกล่อง มีปลายทาง สร้างห้องจับฉลาก แล้วให้ทุกคนเปิดกล่องของขวัญของตัวเองบนมือถือ</p>
     <div class="hero-cta">
-      <a class="btn" href="#create" id="goCreate">สร้างห้อง</a>
-      <a class="btn ghost" href="#join" id="goJoin">เข้าร่วมห้อง</a>
+      <button type="button" class="btn" id="goCreate">สร้างห้อง</button>
+      <button type="button" class="btn ghost" id="goJoin">เข้าร่วมห้อง</button>
     </div>
   </div>
   <div class="hero-hint"><div id="roomsPill" class="rpill" hidden><b id="roomsN">0</b> ห้องที่สร้างไปแล้ว</div><div aria-hidden="true" style="margin-top:8px">ไม่ต้องสมัครสมาชิก</div></div>
 </section>
 
-<div class="below">
-  <main>
-    <section class="narrow" id="v-home">
-      <form id="createForm" class="panel" autocomplete="off" novalidate style="scroll-margin-top:20px">
-        <h2 id="create" style="font-size:1.15rem">สร้างห้องใหม่</h2>
-        <div class="field">
-          <label class="lbl" for="cTitle">ชื่องาน</label>
-          <input type="text" id="cTitle" maxlength="60" placeholder="เช่น ปาร์ตี้ปีใหม่ แผนกบัญชี">
-          <span class="ferr" id="eTitle" role="alert"></span>
-        </div>
-        <span class="ferr" id="eCreate" role="alert"></span>
-        <div class="btnrow"><button class="btn" type="submit" id="cSubmit">สร้างห้อง</button></div>
-        <p class="hintx">ห้องและข้อมูลทุกคนจะถูกลบอัตโนมัติใน 30 วัน ผู้จัดลบเองได้ทุกเมื่อ</p>
-      </form>
+<div class="sheet" id="sheetCreate" hidden role="dialog" aria-modal="true" aria-label="สร้างห้องใหม่">
+  <form class="in" id="createForm" autocomplete="off" novalidate>
+    <button type="button" class="bk" data-close><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>กลับ</button>
+    <div><h1>สร้างห้องใหม่</h1><p class="sub2">ใส่ชื่องานแค่ช่องเดียว ที่เหลือระบบจัดให้</p></div>
+    <div class="card">
+      <label style="display:grid;gap:8px;font-weight:500" for="cTitle">ชื่องาน
+        <input class="big" type="text" id="cTitle" maxlength="60" placeholder="เช่น ปาร์ตี้ปีใหม่ แผนกบัญชี">
+      </label>
+      <span class="ferr" id="eTitle" role="alert"></span>
+      <span class="ferr" id="eCreate" role="alert"></span>
+      <button class="btn full" type="submit" id="cSubmit">สร้างห้อง</button>
+      <div class="hintx">ห้องและข้อมูลทุกคนจะถูกลบอัตโนมัติใน 30 วัน ผู้จัดลบเองได้ทุกเมื่อ</div>
+    </div>
+    <div class="steps2">
+      <div style="font-weight:700;margin-bottom:6px;color:var(--text)">หลังกดสร้างจะได้</div>
+      <div><span class="n">1</span><span>หน้าห้องพร้อมชื่องาน เป็นฮีโร่เคลื่อนไหว</span></div>
+      <div><span class="n">2</span><span>QR และรหัสห้อง 6 ตัวให้ทุกคนสแกนเข้าร่วม</span></div>
+      <div><span class="n">3</span><span>ลิงก์ผู้จัดส่วนตัว (เก็บไว้ ใช้คุมห้อง ไม่ต้องล็อกอิน)</span></div>
+    </div>
+  </form>
+</div>
 
-      <form id="joinForm" class="panel" autocomplete="off" novalidate style="scroll-margin-top:20px">
-        <h2 id="join" style="font-size:1.15rem">เข้าร่วมห้อง</h2>
-        <div class="field">
-          <label class="lbl" for="jCode">รหัสห้อง 6 ตัว</label>
-          <input type="text" id="jCode" maxlength="12" autocapitalize="characters" style="text-transform:uppercase;letter-spacing:.2em">
-          <span class="ferr" id="eJoin" role="alert"></span>
-        </div>
-        <div class="btnrow"><button class="btn ghost" type="submit">เข้าห้อง</button></div>
-      </form>
-
-      <div id="mine" hidden style="margin-top:28px">
-        <h2 style="font-size:1.15rem">ห้องของฉันบนเครื่องนี้</h2>
-        <ul id="mineList" style="list-style:none;padding:0;margin-top:10px;display:grid;gap:8px"></ul>
-      </div>
-
-      <details class="eg" style="margin-top:28px">
-        <summary>วิธีเล่น</summary>
-        <ol class="muted" style="margin:10px 0 0 1.2em;line-height:1.8">
-          <li>ผู้จัดสร้างห้อง แล้วแชร์ลิงก์หรือ QR ให้ทุกคน</li>
-          <li>ทุกคนกรอกชื่อกับของขวัญที่นำมา (ไม่ระบุก็ได้)</li>
-          <li>ใครก็ได้กดเริ่มจับฉลาก ระบบสุ่มแบบวงเดียว ไม่มีใครได้ของตัวเอง</li>
-          <li>รถเลื่อนซานต้าแจกกล่อง แล้วทุกคนเปิดกล่องของตัวเองบนมือถือ</li>
-        </ol>
-      </details>
-    </section>
-
-  </main>
+<div class="sheet" id="sheetJoin" hidden role="dialog" aria-modal="true" aria-label="เข้าร่วมห้อง">
+  <div class="in">
+    <button type="button" class="bk" data-close><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>กลับ</button>
+    <div><h1>เข้าร่วมห้อง</h1><p class="sub2">ใส่รหัสห้อง 6 ตัวที่ผู้จัดให้ หรือสแกน QR จากหน้าจอผู้จัด</p></div>
+    <form class="card" id="joinForm" autocomplete="off" novalidate>
+      <div class="codebox" id="codeBox" role="group" aria-label="รหัสห้อง 6 ตัว"></div>
+      <span class="ferr" id="eJoin" role="alert"></span>
+      <button class="btn full" type="submit">เข้าห้อง</button>
+    </form>
+    <div id="mine" hidden>
+      <h2 style="font-size:1.1rem;margin:0">ห้องของฉันบนเครื่องนี้</h2>
+      <ul class="mine2" id="mineList"></ul>
+    </div>
+  </div>
 </div>
 <div class="toast" id="toast" role="status"></div>
 <script src="/common.js"></script>
@@ -107,18 +120,70 @@ var $ = function (s) { return document.querySelector(s); };
 function myRooms() {
   try { return JSON.parse(localStorage.getItem('gc-rooms') || '[]'); } catch (e) { return []; }
 }
+function joinedRooms() {
+  try { return JSON.parse(localStorage.getItem('gc-joined') || '[]'); } catch (e) { return []; }
+}
 function renderMine() {
-  var list = myRooms().filter(function (r) { return !r.expires || new Date(r.expires) > new Date(); });
+  var host = myRooms().filter(function (r) { return !r.expires || new Date(r.expires) > new Date(); }).map(function (r) { return { code: r.code, title: r.title, href: '/host/' + r.code, tag: 'ผู้จัด' }; });
+  var seen = {}; host.forEach(function (h) { seen[h.code] = 1; });
+  var pl = joinedRooms().filter(function (r) { return !seen[r.code]; }).map(function (r) { return { code: r.code, title: r.title, href: '/r/' + r.code, tag: 'ผู้เล่น' }; });
+  var list = host.concat(pl);
   $('#mine').hidden = !list.length;
   var ul = $('#mineList'); ul.replaceChildren();
   list.forEach(function (r) {
-    var li = document.createElement('li'), a = document.createElement('a');
-    a.href = '/host/' + r.code; a.className = 'btn ghost small';
-    a.textContent = r.code + ' · ' + (r.title || '');
-    li.append(a); ul.append(li);
+    var li = document.createElement('li'), a = document.createElement('a'), t = document.createElement('span'), g = document.createElement('em');
+    a.href = r.href; a.className = 'btn ghost small';
+    t.textContent = r.code + ' · ' + (r.title || ''); g.textContent = r.tag;
+    a.append(t, g); li.append(a); ul.append(li);
   });
 }
 renderMine();
+
+/* หน้าแรกไม่เลื่อน: ปุ่มเปิดแผ่นเต็มจอ (สร้างห้อง / เข้าร่วมห้อง) */
+var openSheet = null;
+function sheet(id, focusSel) {
+  if (openSheet) openSheet.hidden = true;
+  openSheet = $(id); openSheet.hidden = false; renderMine();
+  setTimeout(function () { var f = $(focusSel); if (f) f.focus({ preventScroll: true }); }, 50);
+}
+function closeSheet() { if (openSheet) { openSheet.hidden = true; openSheet = null; } }
+$('#goCreate').addEventListener('click', function () { sheet('#sheetCreate', '#cTitle'); });
+$('#goJoin').addEventListener('click', function () { sheet('#sheetJoin', '#codeBox input'); });
+document.querySelectorAll('[data-close]').forEach(function (b) { b.addEventListener('click', closeSheet); });
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSheet(); });
+
+/* ช่องกรอกรหัส 6 ช่อง */
+var cells = [];
+(function () {
+  var box = $('#codeBox');
+  for (var i = 0; i < 6; i++) {
+    var inp = document.createElement('input');
+    inp.type = 'text'; inp.maxLength = 1; inp.autocapitalize = 'characters'; inp.autocomplete = 'off'; inp.spellcheck = false;
+    inp.setAttribute('aria-label', 'ตัวที่ ' + (i + 1)); inp.inputMode = 'text';
+    box.append(inp); cells.push(inp);
+  }
+  function clean(v) { return String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+  function fill(from, text) {
+    for (var k = 0; k < text.length && from + k < 6; k++) cells[from + k].value = text[k];
+    var nxt = Math.min(5, from + text.length); cells[nxt].focus();
+  }
+  cells.forEach(function (c, i) {
+    c.addEventListener('input', function () {
+      var v = clean(c.value); c.value = '';
+      if (v) fill(i, v);
+    });
+    c.addEventListener('keydown', function (e) {
+      if (e.key === 'Backspace' && !c.value && i > 0) { cells[i - 1].value = ''; cells[i - 1].focus(); e.preventDefault(); }
+      else if (e.key === 'ArrowLeft' && i > 0) cells[i - 1].focus();
+      else if (e.key === 'ArrowRight' && i < 5) cells[i + 1].focus();
+    });
+    c.addEventListener('paste', function (e) {
+      var t = clean((e.clipboardData || window.clipboardData).getData('text'));
+      if (t) { e.preventDefault(); fill(0, t); }
+    });
+    c.addEventListener('focus', function () { c.select(); });
+  });
+})();
 
 var ERR = {
   rate_limited: 'สร้างห้องบ่อยเกินไป ลองใหม่อีกชั่วโมง',
@@ -149,8 +214,8 @@ $('#createForm').addEventListener('submit', async function (e) {
 });
 $('#joinForm').addEventListener('submit', function (e) {
   e.preventDefault();
-  var c = $('#jCode').value.trim().toUpperCase();
-  if (!/^[A-Z0-9]{4,12}$/.test(c)) { $('#eJoin').textContent = 'ใส่รหัสห้องให้ถูกต้อง'; return; }
+  var c = cells.map(function (x) { return x.value; }).join('').toUpperCase();
+  if (!/^[A-Z0-9]{6}$/.test(c)) { $('#eJoin').textContent = 'ใส่รหัสห้องให้ครบ 6 ตัว'; return; }
   location.href = '/r/' + c;
 });
 })();
@@ -224,10 +289,7 @@ $('#joinForm').addEventListener('submit', function (e) {
   }
 })();
 </script>
-<script>
-document.getElementById('goCreate').addEventListener('click', function () { setTimeout(function () { var t = document.getElementById('cTitle'); if (t) t.focus({ preventScroll: true }); }, 450); });
-document.getElementById('goJoin').addEventListener('click', function () { setTimeout(function () { var t = document.getElementById('jCode'); if (t) t.focus({ preventScroll: true }); }, 450); });
-</script>
+
 <script>
 fetch('/api/stats').then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
   if (!d || !d.rooms) return;

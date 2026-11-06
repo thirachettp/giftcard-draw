@@ -10,6 +10,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Chonburi&family=Noto+Sans+Thai:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/style.css">
 <style>
+.giftrow{display:flex;gap:14px;align-items:flex-start}
+.pvcol{display:grid;gap:8px;justify-items:center;flex:none}
+.pv.big{width:96px;height:96px;border-radius:16px;background:radial-gradient(circle at 50% 38%,#4a3a68,#241a38);display:grid;place-items:center}
 .roombadge{font-size:.8rem;letter-spacing:.18em;color:var(--gold);border:1px solid rgba(244,194,77,.45);border-radius:999px;padding:3px 12px;white-space:nowrap}
 .mainv{display:flex;flex-direction:column;min-height:calc(100svh - 90px)}
 .hero2{margin-top:20px;text-align:center}
@@ -79,15 +82,18 @@
           <span class="hintx">ชื่อเล่นหรืออะไรก็ได้ที่เพื่อนๆ จำได้</span>
           <span class="ferr" id="eNick" role="alert"></span>
         </div>
-        <div class="field">
-          <label class="lbl" for="fGift">ของขวัญคืออะไร</label>
-          <textarea id="fGift" maxlength="200" rows="3" placeholder="เช่น แก้วเซรามิกสีครีม"></textarea>
-          <label class="switch"><input type="checkbox" id="fUn"> <span>ไม่ระบุ (ให้เป็นกล่องปริศนา ?)</span></label>
-          <span class="ferr" id="eGift" role="alert"></span>
-        </div>
-        <div class="field">
-          <span class="lbl">ภาพตัวอย่างของขวัญ</span>
-          <div class="prevbox"><div class="pv" id="fPrev"></div><div><div class="hintx" id="fPrevTxt"></div><button type="button" class="btn ghost small" id="fRedraw" style="margin-top:8px">วาดใหม่</button></div></div>
+        <div class="giftrow">
+          <div class="pvcol">
+            <div class="pv big" id="fPrev" aria-label="ภาพตัวอย่างของขวัญ"></div>
+            <button type="button" class="btn ghost small" id="fRedraw">วาดใหม่</button>
+          </div>
+          <div class="field" style="flex:1;min-width:0">
+            <label class="lbl" for="fGift">ของขวัญคืออะไร</label>
+            <textarea id="fGift" maxlength="200" rows="3" placeholder="เช่น แก้วเซรามิกสีครีม"></textarea>
+            <label class="switch"><input type="checkbox" id="fUn"> <span>ไม่ระบุ (กล่องปริศนา ?)</span></label>
+            <span class="ferr" id="eGift" role="alert"></span>
+            <span class="hintx" id="fPrevTxt"></span>
+          </div>
         </div>
         <p class="ferr" id="eForm" role="alert"></p>
         <div class="btnrow">
@@ -136,6 +142,7 @@ async function boot() {
   }
   document.title = 'Giftcard · ห้อง ' + CODE;
   await refresh();
+  try { if (S.room) { var jl = JSON.parse(localStorage.getItem('gc-joined') || '[]').filter(function (x) { return x.code !== CODE; }); jl.unshift({ code: CODE, title: S.room.title }); localStorage.setItem('gc-joined', JSON.stringify(jl.slice(0, 20))); } } catch (e) {}
   setInterval(function () { if (!document.hidden) refresh(); }, 10000);
   document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(); });
 }

@@ -190,7 +190,7 @@ async function load() {
   var prev = D; D = r; remember(r.room);
   if (scene && prev && !animating) {
     var added = r.players.filter(function (p) { return !prev.players.some(function (o) { return o.id === p.id; }); });
-    if (added.length) scene.arrive(added[0].nick);
+    added.slice(0, 40).forEach(function (a) { scene.arrive(a.nick); });
   }
   render();
   if (prev && prev.room.phase === 'register' && r.room.phase === 'drawn') playDeliver();
@@ -250,22 +250,32 @@ function render() {
 
   var hd = $('#aHead'); hd.replaceChildren();
   var tr = el('tr');
-  ['ชื่อ', 'เบอร์'].concat(showGift ? ['ของขวัญ'] : []).concat(['เครื่อง']).concat(drawn ? ['ได้ของขวัญของ', 'เปิดแล้ว'] : []).concat(['จัดการ']).forEach(function (t) { tr.append(el('th', null, t)); });
+  ['ชื่อ', 'เบอร์', '__gift', 'เครื่อง'].concat(drawn ? ['ได้ของขวัญของ', 'ใครจับได้ของฉัน', 'เปิดแล้ว'] : []).concat(['จัดการ']).forEach(function (t) {
+    var th = el('th');
+    if (t === '__gift') {
+      th.append(document.createTextNode('ของขวัญ '));
+      var tb = el('button', 'mini plain', showGift ? 'ซ่อน' : 'แสดง'); tb.type = 'button'; tb.setAttribute('aria-pressed', String(showGift)); tb.setAttribute('aria-label', showGift ? 'ซ่อนของขวัญ' : 'แสดงของขวัญ');
+      tb.addEventListener('click', toggleGift); th.append(tb);
+    } else th.textContent = t;
+    tr.append(th);
+  });
   hd.append(tr);
   var bd = $('#aBody'); bd.replaceChildren();
   var q = $('#giftQ').value.trim().toLowerCase();
   players = players.filter(function (p) { return !q || p.nick.toLowerCase().indexOf(q) >= 0 || (p.gift_text || '').toLowerCase().indexOf(q) >= 0; });
-  if (!players.length) { var e = el('tr'), c = el('td', 'muted', D.players.length ? 'ไม่พบชื่อนี้' : 'ยังไม่มีใครลงทะเบียน'); c.colSpan = 7; e.append(c); bd.append(e); }
+  if (!players.length) { var e = el('tr'), c = el('td', 'muted', D.players.length ? 'ไม่พบชื่อนี้' : 'ยังไม่มีใครลงทะเบียน'); c.colSpan = 9; e.append(c); bd.append(e); }
   players.forEach(function (p) {
     var res = resBy[p.id], row = el('tr');
     row.append(el('td', null, p.nick), el('td', 'num', '#' + p.gift_no));
+    var gc = el('td');
     if (showGift) {
-      var gc = el('td'), gw = el('div'); gw.style.cssText = 'display:flex;align-items:center;gap:10px';
+      var gw = el('div'); gw.style.cssText = 'display:flex;align-items:center;gap:10px';
       var th = el('span', 'thumb'); th.innerHTML = G.iconSvg(p.icon, 30); th.style.cssText = 'width:40px;height:40px;border-radius:10px;background:#241a38;display:grid;place-items:center;flex:none';
-      gw.append(th, el('span', null, p.unspecified ? 'ไม่ระบุ (กล่องปริศนา)' : p.gift_text)); gc.append(gw); row.append(gc);
-    }
+      gw.append(th, el('span', null, p.unspecified ? 'ไม่ระบุ (กล่องปริศนา)' : p.gift_text)); gc.append(gw);
+    } else gc.append(el('span', 'muted', '••••••'));
+    row.append(gc);
     row.append(el('td', p.bound ? 'ok' : 'warn', p.bound ? 'ผูกแล้ว' : 'ยังไม่ผูก รอเจ้าของเข้า'));
-    if (drawn) row.append(el('td', null, res ? nickOf(res.giver_id) : '-'), el('td', res && res.opened_at ? 'ok' : 'muted', res && res.opened_at ? 'เปิดแล้ว' : 'ยังไม่เปิด'));
+    if (drawn) row.append(el('td', null, res ? nickOf(res.giver_id) : '-'), el('td', null, (function () { var m = D.results.filter(function (x) { return x.giver_id === p.id; })[0]; return m ? nickOf(m.receiver_id) : '-'; })()), el('td', res && res.opened_at ? 'ok' : 'muted', res && res.opened_at ? 'เปิดแล้ว' : 'ยังไม่เปิด'));
     var act = el('td'), box = el('div', 'cell-actions');
     var rb = el('button', 'btn ghost small', 'ปลดเครื่อง'); rb.type = 'button'; rb.disabled = !p.bound;
     if (armed['ub' + p.id]) rb.textContent = 'กดอีกครั้งเพื่อยืนยัน';
@@ -304,7 +314,8 @@ function render() {
 
 /* ---------- ปุ่มต่าง ๆ ---------- */
 function syncShowBtn() { var b = $('#aShowGift'); b.textContent = showGift ? 'ซ่อนของขวัญ' : 'แสดงของขวัญ'; b.setAttribute('aria-pressed', String(showGift)); }
-$('#aShowGift').addEventListener('click', function () { showGift = !showGift; try { localStorage.setItem('gc-showgift', showGift ? '1' : '0'); } catch (e) {} syncShowBtn(); if (D) render(); });
+function toggleGift() { showGift = !showGift; try { localStorage.setItem('gc-showgift', showGift ? '1' : '0'); } catch (e) {} syncShowBtn(); if (D) render(); }
+$('#aShowGift').addEventListener('click', toggleGift);
 syncShowBtn();
 $('#aAddOpen').addEventListener('click', function () { var f = $('#addForm'); f.hidden = !f.hidden; if (!f.hidden) $('#addNick').focus(); });
 $('#addCancel').addEventListener('click', function () { $('#addForm').hidden = true; });
