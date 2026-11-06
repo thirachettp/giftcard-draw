@@ -14,6 +14,9 @@ body{padding:0}
 .app{padding:20px max(16px,env(safe-area-inset-left)) 48px}
 .stage{position:relative;min-height:100svh;display:grid;place-items:center;overflow:hidden;isolation:isolate;background:#0b0a14}
 .stage #gl{position:absolute;inset:0;z-index:-2}
+.bigct{margin-top:20px;display:flex;justify-content:center;align-items:baseline;gap:12px}
+.bigct b{font-family:var(--font-display);font-weight:400;font-size:clamp(3rem,12vw,5.5rem);line-height:1;color:var(--gold);text-shadow:0 4px 30px rgba(0,0,0,.6)}
+.bigct span{font-size:1.1rem;color:#ecdff7}
 .stage::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(58% 52% at 50% 46%,rgba(11,10,20,.82) 0%,rgba(11,10,20,.5) 62%,transparent 100%),linear-gradient(180deg,rgba(11,10,20,.5) 0%,transparent 25%,transparent 72%,rgba(11,10,20,.6) 100%)}
 .stage-brand{position:absolute;top:max(18px,env(safe-area-inset-top));left:max(18px,env(safe-area-inset-left));display:flex;align-items:center;gap:10px}
 .stage-brand b{font-family:var(--font-display);font-weight:400;font-size:1.1rem}
@@ -53,6 +56,7 @@ body{padding:0}
         </div>
       </div>
     </div>
+    <div class="bigct"><b id="stCount">0</b><span>ของขวัญในห้อง</span></div>
   </div>
   <div class="stage-hint"><a href="#gifts">ดูของขวัญทั้งหมด ↓</a></div>
 </section>
@@ -83,26 +87,23 @@ body{padding:0}
     </div>
 
     <section class="gifts-sec" id="gifts" style="scroll-margin-top:16px">
-      <h2 class="h2" style="margin-top:0">ของขวัญทั้งหมดในห้อง</h2>
-      <div id="giftPool"></div>
+      <h2 class="h2" style="margin-top:0">ใครลงทะเบียนของขวัญแล้วบ้าง</h2>
       <div class="field srch">
-        <label class="sr" for="giftQ">ค้นหาของขวัญ</label>
-        <input type="text" id="giftQ" placeholder="ค้นหาจากชื่อหรือคำอธิบายของขวัญ เช่น แก้ว, ผ้าห่ม, #12" autocomplete="off">
+        <label class="sr" for="giftQ">ค้นหาชื่อ</label>
+        <input type="text" id="giftQ" placeholder="ค้นหาชื่อ เช่น น้ำ" autocomplete="off">
       </div>
-      <div id="giftList"></div>
+      <ul class="who" id="giftList"></ul>
     </section>
 
     <div class="titlebox">
       <label class="sr" for="aTitle">ชื่องาน</label>
       <input type="text" id="aTitle" maxlength="60">
-      <label class="sr" for="aLabel">ชื่อเรียกรหัสประจำตัว</label>
-      <input type="text" id="aLabel" maxlength="20" placeholder="เช่น รหัสพนักงาน" style="max-width:11em">
-      <button type="button" class="btn ghost small" id="aTitleSave">บันทึก</button>
+      <button type="button" class="btn ghost small" id="aTitleSave">บันทึกชื่องาน</button>
     </div>
     <div class="stats" id="aStats"></div>
     <div class="admin-row">
-      <button type="button" class="btn" id="aStart">เริ่มจับคู่</button>
-      <button type="button" class="btn ghost" id="aWall">เปิดจอกลาง</button>
+      <button type="button" class="btn" id="aStart">เริ่มจับฉลาก</button>
+      <button type="button" class="btn ghost" id="aReplay">เล่นอนิเมชันอีกครั้ง</button>
       <button type="button" class="btn ghost" id="aCsv">ดาวน์โหลดผล (CSV)</button>
       <button type="button" class="btn ghost" id="aReset">รีเซ็ตรอบ</button>
     </div>
@@ -113,45 +114,22 @@ body{padding:0}
         <tbody id="aBody"></tbody>
       </table>
     </div>
-    <p class="hintx" style="margin-top:10px">รีเซ็ตรหัส คือปลดการผูกรหัสประจำตัวกับเครื่องเดิม ให้เจ้าของเข้าใหม่จากเครื่องอื่นได้ ข้อมูลของขวัญและผลจับคู่ไม่หาย</p>
-
-    <details class="eg" style="margin-top:26px">
-      <summary>จำกัดรหัสที่ลงทะเบียนได้ (ไม่บังคับ)</summary>
-      <div class="field" style="margin-top:10px">
-        <label class="sr" for="aAllowed">รายการรหัสที่อนุญาต</label>
-        <textarea id="aAllowed" spellcheck="false" style="width:100%;background:var(--ink);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px 12px;font:inherit;min-height:8em"></textarea>
-        <span class="hintx">หนึ่งบรรทัดต่อหนึ่งรหัส ถ้าเว้นว่างทั้งหมด ใครก็ลงทะเบียนได้ ตอนนี้มี <b id="aAllowedN">0</b> รหัส</span>
-        <div class="btnrow"><button type="button" class="btn ghost small" id="aAllowedSave">บันทึกรายการ</button></div>
-      </div>
-    </details>
+    <p class="hintx" style="margin-top:10px">ปลดเครื่อง คือปลดการผูกชื่อกับเครื่องเดิม ให้เจ้าของเลือกชื่อตัวเองแล้วเข้าใหม่จากเครื่องอื่นได้ ข้อมูลของขวัญและผลจับฉลากไม่หาย</p>
 
     <p class="hintx" id="aExpire" style="margin-top:26px"></p>
     <div class="btnrow" style="margin-top:8px"><button type="button" class="btn ghost small" id="aDelete">ลบห้องนี้ถาวร</button></div>
   </section>
 </div>
 
-<div class="wall" id="wall" hidden>
-  <div class="wall-top">
-    <h1 id="wTitle"></h1>
-    <p id="wProg" class="muted"></p>
-    <button type="button" class="btn ghost small" id="wClose">ปิดจอกลาง</button>
-  </div>
-  <div class="wall-body">
-    <div id="wallPool"></div>
-    <div class="grid" id="wallGrid"></div>
-  </div>
-</div>
-
 <div class="toast" id="toast" role="status"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="/hero.js"></script>
+<script src="/scene.js"></script>
 <script src="/common.js"></script>
 <script>
 (function () {
 'use strict';
-var G = window.GD, el = G.el, baht = G.baht, TIERS = G.TIERS, toast = G.toast;
+var G = window.GD, el = G.el, toast = G.toast;
 var $ = function (s) { return document.querySelector(s); };
 var CODE = ((location.pathname.match(/\/host\/([A-Za-z0-9]+)/) || [])[1] || '').toUpperCase();
 var SK = 'gc-host-' + CODE;
@@ -161,24 +139,20 @@ try {
   if (hm) { key = hm[1]; isNew = /new=1/.test(location.hash); try { localStorage.setItem(SK, key); } catch (e) {} history.replaceState(null, '', location.pathname); }
   else key = localStorage.getItem(SK) || '';
 } catch (e) {}
-var D = null, timer = 0, busy = false, hero = null;
+var D = null, timer = 0, busy = false, scene = null, animating = false;
 var origin = location.origin;
 var playerUrl = origin + '/r/' + CODE;
 
 async function call(action, body) {
   try {
-    var r = await fetch('/api/host/' + action, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-admin-key': key },
-      body: JSON.stringify(Object.assign({ room: CODE }, body || {}))
-    });
+    var r = await fetch('/api/host/' + action, { method: 'POST', headers: { 'content-type': 'application/json', 'x-admin-key': key }, body: JSON.stringify(Object.assign({ room: CODE }, body || {})) });
     var j = {}; try { j = await r.json(); } catch (e) {}
     j.status = r.status; return j;
   } catch (e) { return { status: 0, error: 'network' }; }
 }
 function noKey(title, body) {
   $('#v-nokey').hidden = false; $('#v-admin').hidden = true; clearInterval(timer);
-  $('#stage').hidden = true; if (hero) { hero.destroy(); hero = null; }
+  $('#stage').hidden = true;
   if (title) $('#nkTitle').textContent = title;
   if (body) $('#nkBody').textContent = body;
 }
@@ -201,20 +175,34 @@ async function load() {
     $('#net').hidden = false; return false;
   }
   $('#net').hidden = true;
-  D = r; remember(r.room); render(); return true;
+  var prev = D; D = r; remember(r.room);
+  if (scene && prev && !animating) {
+    var added = r.players.filter(function (p) { return !prev.players.some(function (o) { return o.id === p.id; }); });
+    if (added.length) scene.arrive(added[0].nick);
+  }
+  render();
+  if (prev && prev.room.phase === 'register' && r.room.phase === 'drawn') playDeliver();
+  return true;
 }
 function enter() {
   $('#v-nokey').hidden = true; $('#v-admin').hidden = false;
   $('#stage').hidden = false;
-  if (!hero && window.GCHero && window.THREE) { try { hero = GCHero.mount($('#gl'), { variant: 'a' }); } catch (e) { hero = null; } }
+  if (!scene && window.GCScene) { try { scene = GCScene.mount($('#gl'), { count: D ? D.players.length : 0 }); } catch (e) { scene = null; } }
+  if (scene && D) scene.setCount(D.players.length);
   setTimeout(function () { $('#stBody').classList.add('on'); }, 150);
   if (isNew) $('#saveBox').hidden = false;
   clearInterval(timer);
   timer = setInterval(function () { if (!document.hidden && !busy) load(); }, 10000);
 }
+function playDeliver() {
+  if (!scene || animating) return;
+  animating = true;
+  $('#stage').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  scene.deliver(function () { animating = false; if (D) scene.setCount(D.players.length); });
+}
 
 /* ---------- แสดงผล ---------- */
-function nickOf(emp) { var p = D.players.find(function (x) { return x.emp_id === emp; }); return p ? p.nick : '-'; }
+var nickOf = function (id) { var p = D.players.find(function (x) { return x.id === id; }); return p ? p.nick : '-'; };
 function setMsg(m) { $('#aMsg').textContent = m || ''; }
 var armed = {};
 function arm(btn, k, label, confirmLabel, fn) {
@@ -227,73 +215,75 @@ function arm(btn, k, label, confirmLabel, fn) {
 }
 function render() {
   var room = D.room, drawn = room.phase === 'drawn', players = D.players.slice();
-  players.sort(function (a, b) { return String(a.nick).localeCompare(String(b.nick), 'th'); });
-  var resBy = {}; D.results.forEach(function (r) { resBy[r.receiver_emp] = r; });
+  var resBy = {}; D.results.forEach(function (r) { resBy[r.receiver_id] = r; });
   var opened = D.results.filter(function (r) { return r.opened_at; }).length;
   $('#evTitle').textContent = room.title;
   document.title = 'Giftcard · ผู้จัด ' + CODE;
   if (document.activeElement !== $('#aTitle')) $('#aTitle').value = room.title;
-  if (document.activeElement !== $('#aLabel')) $('#aLabel').value = room.id_label;
   renderShare();
   $('#stTitle').textContent = room.title;
-  var items = D.players.map(function (p) { return { no: p.gift_no, price: p.price, prompt: p.prompt, mine: false }; });
-  G.renderPool($('#giftPool'), items, { list: false });
-  G.renderPool($('#giftList'), items, { listOnly: true, filter: $('#giftQ').value, open: true });
+  $('#stCount').textContent = String(players.length);
+  if (scene && !animating) scene.setCount(players.length);
   $('#aExpire').textContent = 'ห้องนี้จะถูกลบอัตโนมัติ (รวมข้อมูลทุกคน) ในวันที่ ' + new Date(room.expires_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' }) + ' ดาวน์โหลด CSV เก็บไว้ก่อนถ้าต้องการ';
 
+  /* ค้นหาชื่อ พร้อมภาพของขวัญ */
+  var q = $('#giftQ').value.trim().toLowerCase(), ul = $('#giftList'); ul.replaceChildren();
+  var shown = players.filter(function (p) { return !q || p.nick.toLowerCase().indexOf(q) >= 0 || (p.gift_text || '').toLowerCase().indexOf(q) >= 0; });
+  if (!shown.length) ul.append(el('li', 'muted', players.length ? 'ไม่พบชื่อนี้' : 'ยังไม่มีใครลงทะเบียน'));
+  shown.forEach(function (p) {
+    var li = el('li'), th = el('span', 'thumb'); th.innerHTML = G.iconSvg(p.icon, 36);
+    var nm = el('span', 'nm'); nm.append(el('div', null, p.nick), el('div', 'gt2', p.unspecified ? 'ไม่ระบุ (กล่องปริศนา)' : p.gift_text));
+    li.append(th, nm, el('span', 'gn', '#' + p.gift_no)); ul.append(li);
+  });
+
   var st = $('#aStats'); st.replaceChildren();
-  [[players.length, 'คนลงทะเบียน']].concat(drawn ? [[opened + '/' + D.results.length, 'เปิดการ์ดแล้ว']] : []).forEach(function (x) {
+  [[players.length, 'คนลงทะเบียน']].concat(drawn ? [[opened + '/' + D.results.length, 'เปิดกล่องแล้ว']] : []).forEach(function (x) {
     var d = el('div'); d.append(el('b', null, String(x[0])), document.createTextNode(x[1])); st.append(d);
   });
   $('#aStart').disabled = drawn || busy || players.length < 2;
-  $('#aStart').textContent = drawn ? 'จับคู่แล้ว' : 'เริ่มจับคู่';
+  $('#aStart').textContent = drawn ? 'จับฉลากแล้ว' : 'เริ่มจับฉลาก';
   $('#aReset').disabled = !drawn || busy;
   $('#aCsv').disabled = !drawn;
+  $('#aReplay').hidden = !drawn;
 
   var hd = $('#aHead'); hd.replaceChildren();
   var tr = el('tr');
-  ['ชื่อ', room.id_label, 'เครื่อง', 'เบอร์ที่นำมา', 'ราคา'].concat(drawn ? ['ได้เบอร์', 'ของขวัญของ', 'เปิดแล้ว'] : []).concat(['จัดการ']).forEach(function (h) { tr.append(el('th', null, h)); });
+  ['ชื่อ', 'เบอร์', 'ของขวัญ', 'เครื่อง'].concat(drawn ? ['ได้ของขวัญของ', 'เปิดแล้ว'] : []).concat(['จัดการ']).forEach(function (t) { tr.append(el('th', null, t)); });
   hd.append(tr);
-
   var bd = $('#aBody'); bd.replaceChildren();
-  if (!players.length) { var e = el('tr'), c = el('td', 'muted', 'ยังไม่มีใครลงทะเบียน'); c.colSpan = 9; e.append(c); bd.append(e); }
+  if (!players.length) { var e = el('tr'), c = el('td', 'muted', 'ยังไม่มีใครลงทะเบียน'); c.colSpan = 7; e.append(c); bd.append(e); }
   players.forEach(function (p) {
-    var res = resBy[p.emp_id], row = el('tr');
-    row.append(el('td', null, p.nick), el('td', 'num', p.emp_label),
-      el('td', p.bound ? 'ok' : 'warn', p.bound ? 'ผูกแล้ว' : 'รีเซ็ตแล้ว รอเข้าใหม่'),
-      el('td', 'num', '#' + p.gift_no), el('td', 'num', baht(p.price)));
-    if (drawn) {
-      row.append(el('td', 'num', res ? '#' + res.gift_no : '-'), el('td', null, res ? nickOf(res.giver_emp) : '-'),
-        el('td', res && res.opened_at ? 'ok' : 'muted', res && res.opened_at ? 'เปิดแล้ว' : 'ยังไม่เปิด'));
-    }
+    var res = resBy[p.id], row = el('tr');
+    row.append(el('td', null, p.nick), el('td', 'num', '#' + p.gift_no), el('td', null, p.unspecified ? 'ไม่ระบุ' : p.gift_text),
+      el('td', p.bound ? 'ok' : 'warn', p.bound ? 'ผูกแล้ว' : 'ปลดแล้ว รอเข้าใหม่'));
+    if (drawn) row.append(el('td', null, res ? nickOf(res.giver_id) : '-'), el('td', res && res.opened_at ? 'ok' : 'muted', res && res.opened_at ? 'เปิดแล้ว' : 'ยังไม่เปิด'));
     var act = el('td'), box = el('div', 'cell-actions');
-    var rb = el('button', 'btn ghost small', 'รีเซ็ตรหัส'); rb.type = 'button';
-    rb.disabled = !p.bound;
-    if (armed['rs' + p.emp_id]) rb.textContent = 'กดอีกครั้งเพื่อยืนยัน';
+    var rb = el('button', 'btn ghost small', 'ปลดเครื่อง'); rb.type = 'button'; rb.disabled = !p.bound;
+    if (armed['ub' + p.id]) rb.textContent = 'กดอีกครั้งเพื่อยืนยัน';
     rb.addEventListener('click', function () {
-      arm(rb, 'rs' + p.emp_id, 'รีเซ็ตรหัส', 'กดอีกครั้งเพื่อยืนยัน', async function () {
-        var r = await call('reset-employee', { emp_id: p.emp_id });
-        toast(r.status === 200 ? 'รีเซ็ตรหัส ' + p.emp_label + ' แล้ว ให้เจ้าของเข้าใหม่ได้' : 'รีเซ็ตไม่สำเร็จ'); load();
+      arm(rb, 'ub' + p.id, 'ปลดเครื่อง', 'กดอีกครั้งเพื่อยืนยัน', async function () {
+        var r = await call('unbind', { id: p.id });
+        toast(r.status === 200 ? 'ปลดเครื่องของ ' + p.nick + ' แล้ว ให้เจ้าของเลือกชื่อเข้าใหม่ได้' : 'ปลดเครื่องไม่สำเร็จ'); load();
       });
     });
     box.append(rb);
     if (drawn && res && res.opened_at) {
       var ub = el('button', 'btn ghost small', 'ให้เปิดใหม่'); ub.type = 'button';
-      if (armed['un' + p.emp_id]) ub.textContent = 'กดอีกครั้งเพื่อยืนยัน';
+      if (armed['un' + p.id]) ub.textContent = 'กดอีกครั้งเพื่อยืนยัน';
       ub.addEventListener('click', function () {
-        arm(ub, 'un' + p.emp_id, 'ให้เปิดใหม่', 'กดอีกครั้งเพื่อยืนยัน', async function () {
-          var r = await call('reset-employee', { emp_id: p.emp_id, unopen: true });
-          toast(r.status === 200 ? 'ให้ ' + p.nick + ' เปิดการ์ดใหม่ได้ (รีเซ็ตรหัสด้วย)' : 'ไม่สำเร็จ'); load();
+        arm(ub, 'un' + p.id, 'ให้เปิดใหม่', 'กดอีกครั้งเพื่อยืนยัน', async function () {
+          var r = await call('unbind', { id: p.id, unopen: true });
+          toast(r.status === 200 ? 'ให้ ' + p.nick + ' เปิดกล่องใหม่ได้ (ปลดเครื่องด้วย)' : 'ไม่สำเร็จ'); load();
         });
       });
       box.append(ub);
     }
     if (!drawn) {
       var db = el('button', 'btn ghost small', 'ลบ'); db.type = 'button';
-      if (armed['rm' + p.emp_id]) db.textContent = 'กดอีกครั้งเพื่อลบ';
+      if (armed['rm' + p.id]) db.textContent = 'กดอีกครั้งเพื่อลบ';
       db.addEventListener('click', function () {
-        arm(db, 'rm' + p.emp_id, 'ลบ', 'กดอีกครั้งเพื่อลบ', async function () {
-          var r = await call('remove', { emp_id: p.emp_id });
+        arm(db, 'rm' + p.id, 'ลบ', 'กดอีกครั้งเพื่อลบ', async function () {
+          var r = await call('remove', { id: p.id });
           toast(r.status === 200 ? 'ลบออกจากห้องแล้ว' : 'ลบไม่สำเร็จ'); load();
         });
       });
@@ -301,49 +291,49 @@ function render() {
     }
     act.append(box); row.append(act); bd.append(row);
   });
-
-  if (document.activeElement !== $('#aAllowed')) $('#aAllowed').value = D.allowed.join('\n');
-  $('#aAllowedN').textContent = String(D.allowed.length);
-  renderWall();
 }
 
 /* ---------- ปุ่มต่าง ๆ ---------- */
 $('#aTitleSave').addEventListener('click', async function () {
-  var r = await call('settings', { title: $('#aTitle').value, id_label: $('#aLabel').value });
+  var r = await call('settings', { title: $('#aTitle').value });
   toast(r.status === 200 ? 'บันทึกแล้ว' : 'บันทึกไม่สำเร็จ'); load();
 });
 $('#aStart').addEventListener('click', async function () {
   if (busy) return;
-  busy = true; render(); setMsg('กำลังจับคู่');
+  var n = D.players.length;
+  var ok = await G.confirmFlow([
+    { title: 'เริ่มจับฉลากตอนนี้?', ok: 'ดำเนินการต่อ', cancel: 'ยังไม่เริ่ม',
+      items: ['สุ่มจับคู่ของขวัญ ' + n + ' ใบ ให้ ' + n + ' คน แบบวงเดียว ไม่มีใครได้ของตัวเอง', 'ปิดรับลงทะเบียน และลบของขวัญไม่ได้อีก', 'รถเลื่อนซานต้ารับกล่องจากชั้นวางแล้วบินไปแจก เล่นบนจอนี้', 'ทุกคนเห็นกล่องของตัวเองบนมือถือ เปิดได้ และเห็นว่าใครได้ของใครหลังเปิดกล่อง'] },
+    { title: 'แน่ใจจริงๆ ใช่ไหม?', ok: 'เริ่มจับฉลากเลย', cancel: 'กลับไปตรวจก่อน',
+      note: 'ผลสุ่มจะถูกสร้างทันที มีคน ' + n + ' คน และ ' + n + ' ของขวัญ ตรวจให้ครบแล้วหรือยัง? ใครมาช้าจะไม่ได้ร่วมรอบนี้ ถ้าต้องแก้ ต้องกด "รีเซ็ตรอบ" ซึ่งล้างผลทั้งหมดและเริ่มใหม่' }
+  ]);
+  if (!ok) return;
+  busy = true; render(); setMsg('กำลังจับฉลาก');
   var r = await call('draw');
   busy = false;
-  if (r.status === 200) setMsg('จับคู่เสร็จแล้ว ' + r.count + ' คน ทุกเครื่องเห็นการ์ดของตัวเองแล้ว');
-  else if (r.error === 'already_drawn') setMsg('จับคู่ไปแล้ว');
+  if (r.status === 200) setMsg('จับฉลากเสร็จแล้ว ' + r.count + ' คน ทุกเครื่องเห็นกล่องของตัวเองแล้ว');
+  else if (r.error === 'already_drawn') setMsg('จับฉลากไปแล้ว');
   else if (r.error === 'too_few') setMsg('ต้องมีอย่างน้อย 2 คน');
-  else setMsg('จับคู่ไม่สำเร็จ ลองกดอีกครั้ง (ยังไม่ปิดรับลงทะเบียน)');
+  else setMsg('จับฉลากไม่สำเร็จ ลองกดอีกครั้ง (ยังไม่ปิดรับลงทะเบียน)');
   load();
 });
+$('#aReplay').addEventListener('click', playDeliver);
 $('#aReset').addEventListener('click', function () {
   var btn = $('#aReset');
-  arm(btn, 'round', 'รีเซ็ตรอบ', 'กดอีกครั้งเพื่อล้างผลจับคู่', async function () {
+  arm(btn, 'round', 'รีเซ็ตรอบ', 'กดอีกครั้งเพื่อล้างผลจับฉลาก', async function () {
     busy = true; setMsg('กำลังล้างผล');
     var r = await call('reset-round');
     busy = false;
     setMsg(r.status === 200 ? 'ล้างผลแล้ว เปิดรับลงทะเบียนอีกครั้ง' : 'ล้างผลไม่สำเร็จ ลองอีกครั้ง'); load();
   });
 });
-$('#aAllowedSave').addEventListener('click', async function () {
-  var ids = $('#aAllowed').value.split(/\r?\n|,/).map(function (s) { return s.trim(); }).filter(Boolean);
-  var r = await call('allowed', { ids: ids });
-  toast(r.status === 200 ? (r.count ? 'บันทึกรายการ ' + r.count + ' รหัส' : 'ล้างรายการแล้ว ใครก็ลงทะเบียนได้') : 'บันทึกไม่สำเร็จ'); load();
-});
 function csvCell(v) { v = String(v == null ? '' : v); return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
 $('#aCsv').addEventListener('click', function () {
-  var resBy = {}; D.results.forEach(function (r) { resBy[r.receiver_emp] = r; });
-  var lines = [['ชื่อ', D.room.id_label, 'เบอร์ที่นำมา', 'ราคาที่นำมา', 'ได้เบอร์', 'ราคาที่ได้', 'ของขวัญของ', 'เปิดการ์ดแล้ว']];
+  var resBy = {}; D.results.forEach(function (r) { resBy[r.receiver_id] = r; });
+  var lines = [['ชื่อ', 'เบอร์ของขวัญที่นำมา', 'ของขวัญที่นำมา', 'ได้เบอร์', 'ได้ของขวัญของ', 'เปิดกล่องแล้ว']];
   D.players.forEach(function (p) {
-    var r = resBy[p.emp_id];
-    lines.push([p.nick, p.emp_label, p.gift_no, p.price, r ? r.gift_no : '', r ? r.price : '', r ? nickOf(r.giver_emp) : '', r && r.opened_at ? 'ใช่' : 'ไม่']);
+    var r = resBy[p.id];
+    lines.push([p.nick, p.gift_no, p.unspecified ? 'ไม่ระบุ' : p.gift_text, r ? r.gift_no : '', r ? nickOf(r.giver_id) : '', r && r.opened_at ? 'ใช่' : 'ไม่']);
   });
   var text = '﻿' + lines.map(function (l) { return l.map(csvCell).join(','); }).join('\r\n');
   var a = document.createElement('a');
@@ -352,29 +342,6 @@ $('#aCsv').addEventListener('click', function () {
   document.body.append(a); a.click(); a.remove();
   setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
 });
-
-/* ---------- จอกลาง ---------- */
-$('#aWall').addEventListener('click', function () { $('#wall').hidden = false; document.body.style.overflow = 'hidden'; renderWall(); });
-$('#wClose').addEventListener('click', function () { $('#wall').hidden = true; document.body.style.overflow = ''; });
-function renderWall() {
-  if ($('#wall').hidden || !D) return;
-  var drawn = D.room.phase === 'drawn';
-  $('#wTitle').textContent = D.room.title;
-  var resBy = {}; D.results.forEach(function (r) { resBy[r.receiver_emp] = r; });
-  var players = D.players.slice().sort(function (a, b) { return String(a.nick).localeCompare(String(b.nick), 'th'); });
-  var op = D.results.filter(function (r) { return r.opened_at; }).length;
-  $('#wProg').textContent = drawn ? 'เปิดการ์ดแล้ว ' + op + ' / ' + players.length : 'เข้าร่วมแล้ว ' + players.length + ' คน · รอเริ่มจับคู่';
-  G.renderPool($('#wallPool'), D.players.map(function (p) { return { no: p.gift_no, price: p.price, prompt: p.prompt, mine: false }; }), { list: false });
-  var g = $('#wallGrid'); g.replaceChildren();
-  players.forEach(function (p) {
-    var res = resBy[p.emp_id], isOp = !!(res && res.opened_at), t = res ? TIERS[res.tier] || TIERS[0] : null;
-    var b = el('div', 'tile idle' + (isOp ? ' opened' : ' pattern'));
-    if (isOp && t) b.style.setProperty('--tc', t.hex);
-    b.append(el('span', 't-top', D.room.title), el('span', 't-name', p.nick),
-      el('span', 't-state', isOp && t ? 'เปิดแล้ว · ' + t.th : (drawn ? 'รอเปิดการ์ด' : 'พร้อมแล้ว')));
-    g.append(b);
-  });
-}
 
 /* ---------- แชร์ / ลบห้อง ---------- */
 var qrDone = false;
@@ -404,7 +371,7 @@ $('#aDelete').addEventListener('click', function () {
 
 /* ---------- เริ่ม ---------- */
 if (!CODE || !key) noKey();
-else load().then(function (ok) { if (ok) enter(); });
+else load().then(function (ok) { if (ok) { enter(); render(); } });
 })();
 </script>
 </body>

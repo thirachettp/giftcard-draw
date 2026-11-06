@@ -1,27 +1,19 @@
-import { db, norm, send, fail, userFrom, getRoom, handler } from './_lib/logic.js';
+import { db, send, fail, userFrom, getRoom, memberOf, handler } from './_lib/logic.js';
 
-/** เข้าห้องด้วยรหัสประจำตัว: ผูกเครื่องนี้กับรหัสที่ลงทะเบียนไว้แล้ว (ใช้ได้ทุกช่วง) */
+/** ผูกเครื่องนี้กับรายชื่อที่ผู้จัดปลดเครื่องไว้แล้ว (ใช้เมื่อเปลี่ยนเครื่องหรือล้างเบราว์เซอร์) */
 export default handler(async (req, res) => {
   if (req.method !== 'POST') return fail(res, 405, 'method');
   const b = req.body || {};
-  const key = norm(b.emp_id);
-  if (!key || key.length > 20) return fail(res, 400, 'bad_emp');
-
+  const id = String(b.id || '');
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return fail(res, 400, 'bad_id');
   const uid = await userFrom(req);
   if (!uid) return fail(res, 401, 'no_session');
   const room = await getRoom(b.room);
   if (!room) return fail(res, 404, 'room_not_found');
+  if (await memberOf(room.id, uid)) return fail(res, 409, 'device_has_other');
 
-  const sb = db();
-  const { data: row } = await sb.from('players').select('emp_id,user_id').eq('room_id', room.id).eq('emp_id', key).maybeSingle();
-  if (!row) return fail(res, 404, 'not_found');
-  if (row.user_id && row.user_id !== uid) return fail(res, 409, 'bound');
-  if (row.user_id === uid) return send(res, 200, { ok: true });
-
-  const { data: other } = await sb.from('players').select('emp_id').eq('room_id', room.id).eq('user_id', uid).neq('emp_id', key).maybeSingle();
-  if (other) return fail(res, 409, 'device_has_other');
-
-  const { error } = await sb.from('players').update({ user_id: uid }).eq('room_id', room.id).eq('emp_id', key).is('user_id', null);
-  if (error) return error.code === '23505' ? fail(res, 409, 'device_has_other') : fail(res, 500, 'server_error');
+  const up = await db().from('players').update({ user_id: uid }).eq('id', id).eq('room_id', room.id).is('user_id', null).select('id');
+  if (up.error) return up.error.code === '23505' ? fail(res, 409, 'device_has_other') : fail(res, 500, 'server_error');
+  if (!up.data.length) return fail(res, 409, 'not_free');
   return send(res, 200, { ok: true });
 });

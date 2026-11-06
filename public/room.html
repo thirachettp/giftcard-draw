@@ -11,8 +11,9 @@
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-<div class="app">
-  <header class="top">
+<div class="bgwrap" id="bg" aria-hidden="true"></div>
+<div class="app roommain">
+  <header class="top roomhead">
     <div class="brand">
       <span class="brand-mark pattern" aria-hidden="true"></span>
       <div>
@@ -31,114 +32,45 @@
       <p class="lead" id="bBody"></p>
     </section>
 
-    <section id="v-login" class="narrow" hidden>
-      <h1 class="h">เข้าห้องจับฉลาก</h1>
-      <p class="lead">ใส่<span class="idl">รหัสพนักงาน</span>ของคุณ ถ้าเคยลงทะเบียนไว้แล้วระบบจะพากลับเข้าห้องเดิม ถ้ายังไม่เคย จะให้กรอกข้อมูลของขวัญต่อ</p>
-      <form id="loginForm" class="panel" autocomplete="off" novalidate>
-        <div class="field">
-          <label class="lbl" for="lEmp"><span class="idl">รหัสพนักงาน</span></label>
-          <input type="text" id="lEmp" maxlength="20" autocapitalize="off" autocomplete="off">
-          <span class="ferr" id="eLogin" role="alert"></span>
-        </div>
-        <div class="btnrow"><button class="btn" type="submit" id="lSubmit">ต่อไป</button></div>
-      </form>
+    <section id="v-main" class="narrow" hidden>
+      <div class="bigcount"><b id="mCount">0</b><span id="mCountLab"></span></div>
+      <p class="muted" id="mSub"></p>
+      <div id="mMine"></div>
+      <div id="mFree"></div>
+      <div class="srchbox"><label class="sr" for="mQ">ค้นหาชื่อ</label><input type="text" id="mQ" placeholder="ค้นหาชื่อ" autocomplete="off"></div>
+      <div id="mRes"></div>
+      <div id="mList"></div>
+      <div class="btnrow" id="mDraw" style="margin-top:22px" hidden></div>
     </section>
 
     <section id="v-form" class="narrow" hidden>
       <h1 class="h" id="formTitle">ลงทะเบียนของขวัญ</h1>
-      <p class="lead">ระหว่างรอผู้จัดห้องกดเริ่มจับคู่ คุณจะเห็นว่ามีของขวัญอะไร ราคาเท่าไหร่ กี่ใบ อยู่ในกล่อง</p>
+      <p class="lead">บอกชื่อของคุณกับของขวัญที่เตรียมมา หลังจับฉลากจะมีคนได้รับของขวัญนี้ และคุณจะได้ของขวัญของคนอื่น</p>
       <form id="f" class="panel" autocomplete="off" novalidate>
-        <div class="row2">
-          <div class="field">
-            <label class="lbl" for="fEmp"><span class="idl">รหัสพนักงาน</span></label>
-            <input type="text" id="fEmp" class="ro" readonly>
-            <button type="button" class="linkbtn" id="fChange" style="justify-self:start;font-size:.85rem">ใช้รหัสอื่น</button>
-          </div>
-          <div class="field">
-            <label class="lbl" for="fNick">ชื่อ</label>
-            <input type="text" id="fNick" maxlength="24">
-            <span class="hintx">ชื่อเล่นหรืออะไรก็ได้ที่บอกได้ว่าเป็นคุณ</span>
-            <span class="ferr" id="eNick" role="alert"></span>
-          </div>
-        </div>
-        <div class="row2">
-          <div class="field">
-            <label class="lbl" for="fNo">เบอร์ของขวัญ</label>
-            <input type="text" id="fNo" maxlength="8" autocapitalize="off">
-            <span class="hintx">รับเบอร์จากผู้จัดห้อง</span>
-            <span class="ferr" id="eNo" role="alert"></span>
-          </div>
-          <div class="field">
-            <label class="lbl" for="fPrice">ราคาขั้นต่ำของของขวัญ</label>
-            <div class="money"><span>฿</span><input type="number" id="fPrice" min="0" max="1000000" step="1" inputmode="numeric"></div>
-            <span class="hintx">ราคาต่ำสุดของที่คุณเตรียมมา</span>
-            <span class="ferr" id="ePrice" role="alert"></span>
-          </div>
+        <div class="field">
+          <label class="lbl" for="fNick">ชื่อ</label>
+          <input type="text" id="fNick" maxlength="24">
+          <span class="hintx">ชื่อเล่นหรืออะไรก็ได้ที่เพื่อนๆ จำได้</span>
+          <span class="ferr" id="eNick" role="alert"></span>
         </div>
         <div class="field">
-          <label class="lbl" for="fPrompt">ของขวัญคืออะไร (เขียนเป็นพรอมต์ให้ AI สร้างภาพ)</label>
-          <textarea id="fPrompt" maxlength="400"></textarea>
-          <div class="cnt"><span id="fCount">0</span> / 400</div>
-          <details class="eg">
-            <summary>ดูตัวอย่างการเขียน</summary>
-            <p>กล่องของขวัญทรงสี่เหลี่ยมสีเขียวเข้ม ผูกริบบิ้นสีทอง ด้านในมีเทียนหอมแก้วใสสามแท่ง วางบนโต๊ะไม้โอ๊ค แสงนุ่มจากหน้าต่าง ภาพถ่ายผลิตภัณฑ์ มุมมองจากด้านบนเอียงเล็กน้อย</p>
-            <p>บอกชนิดของ สี วัสดุ ขนาดโดยประมาณ และสไตล์ภาพ ไม่ต้องใส่ยี่ห้อ</p>
-          </details>
-          <span class="ferr" id="ePrompt" role="alert"></span>
+          <label class="lbl" for="fGift">ของขวัญคืออะไร</label>
+          <textarea id="fGift" maxlength="200" rows="3" placeholder="เช่น แก้วเซรามิกสีครีม"></textarea>
+          <label class="switch"><input type="checkbox" id="fUn"> <span>ไม่ระบุ (ให้เป็นกล่องปริศนา ?)</span></label>
+          <span class="ferr" id="eGift" role="alert"></span>
+        </div>
+        <div class="field">
+          <span class="lbl">ภาพตัวอย่างของขวัญ</span>
+          <div class="prevbox"><div class="pv" id="fPrev"></div><div class="hintx" id="fPrevTxt"></div></div>
         </div>
         <p class="ferr" id="eForm" role="alert"></p>
         <div class="btnrow">
-          <button class="btn" type="submit" id="fSubmit">เข้าห้องจับฉลาก</button>
-          <button class="btn ghost" type="button" id="fCancel" hidden>ยกเลิก</button>
+          <button class="btn" type="submit" id="fSubmit">ลงทะเบียน</button>
+          <button class="btn ghost" type="button" id="fCancel">ยกเลิก</button>
         </div>
       </form>
     </section>
-
-    <section id="v-wait" class="narrow" hidden>
-      <div class="status"><span class="pulse" aria-hidden="true"></span><div><b>ลงทะเบียนแล้ว รอผู้จัดห้องกดเริ่มจับคู่</b><p class="muted" id="wCount"></p></div></div>
-      <h2 class="h2">ของขวัญในกล่องวันนี้</h2>
-      <div id="wPool"></div>
-      <h2 class="h2">ข้อมูลของคุณ</h2>
-      <div class="mine" id="wMine"></div>
-    </section>
-
-    <section id="v-result" class="narrow" hidden>
-      <div id="rBody"></div>
-      <h2 class="h2">ของขวัญทั้งหมดในกล่อง</h2>
-      <div id="rPool"></div>
-    </section>
   </main>
-</div>
-
-<div class="focus" id="focus" hidden role="dialog" aria-modal="true" aria-label="เปิดการ์ด">
-  <div class="focus-in">
-    <div class="scene" id="scene">
-      <div class="inside">
-        <div class="content" id="content">
-          <p class="kicker">ของขวัญของคุณคือเบอร์</p>
-          <h2 class="gno" id="gno"></h2>
-          <div class="chip"><b id="tierEn"></b><span id="tierTh"></span></div>
-          <p class="budget" id="budget"></p>
-          <p class="gdesc" id="gdesc"></p>
-        </div>
-      </div>
-      <div class="cover" id="cover" tabindex="0" role="button" aria-label="เปิดการ์ด กด Enter หรือลากขอบไปทางซ้าย">
-        <div class="face front pattern">
-          <span class="f-top">ปีใหม่ ๒๕๗๐</span>
-          <div class="plaque"><span class="to">การ์ดของ</span><strong id="coverName"></strong></div>
-          <span class="f-hint">ลากขอบขวาไปทางซ้าย</span>
-          <span class="grip" aria-hidden="true"></span>
-        </div>
-        <div class="face back"><span>สุขสันต์<br>ปีใหม่</span></div>
-      </div>
-    </div>
-    <p class="hint" id="hint"></p>
-    <div class="actions">
-      <button type="button" class="btn ghost" id="closeBtn">ปิด</button>
-      <button type="button" class="btn" id="openNow">เปิดเลย</button>
-    </div>
-  </div>
-  <canvas id="fx" aria-hidden="true"></canvas>
 </div>
 
 <div class="toast" id="toast" role="status"></div>
@@ -146,383 +78,346 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="/common.js"></script>
+<script src="/scene.js"></script>
 <script>
 (async function () {
 'use strict';
-var G = window.GD, el = G.el, baht = G.baht, TIERS = G.TIERS, toast = G.toast;
+var G = window.GD, el = G.el, toast = G.toast;
 var $ = function (s) { return document.querySelector(s); };
-var clamp = function (v, a, b) { return Math.min(b, Math.max(a, v)); };
 var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-var DEFAULT_TITLE = 'Giftcard';
 var CODE = ((location.pathname.match(/\/r\/([A-Za-z0-9]+)/) || [])[1] || '').toUpperCase();
-var L = function () { return (S.room && S.room.id_label) || 'รหัสพนักงาน'; };
-function applyLabel() { document.querySelectorAll('.idl').forEach(function (n) { n.textContent = L(); }); }
+var COLORS = ['#c8334b', '#2f9e7a', '#7a5cd6', '#3d8fd0', '#d9703a'];
 
-var S = { room: { phase: 'register', title: DEFAULT_TITLE, id_label: 'รหัสพนักงาน' }, me: null, pool: [], res: null, loaded: false, emp: '', editing: false, sig: '' };
-var sb = null, formOn = false;
-
-var VIEWS = ['boot', 'blocked', 'login', 'form', 'wait', 'result'];
-function show(name) {
-  VIEWS.forEach(function (v) { $('#v-' + v).hidden = v !== name; });
-  if (name !== 'form') formOn = false;
-}
+var S = { room: null, me: null, myRes: null, loaded: false, sig: '', q: '', editing: false, pin: '' };
+var sb = null;
+var VIEWS = ['boot', 'blocked', 'main', 'form'];
+function show(name) { VIEWS.forEach(function (v) { $('#v-' + v).hidden = v !== name; }); }
 function block(title, body) { show('blocked'); $('#bTitle').textContent = title; $('#bBody').textContent = body; }
 function netNote(on) { $('#net').hidden = !on; }
+var playerOf = function (id) { return S.room.players.find(function (p) { return p.id === id; }); };
 
 /* ---------- เริ่มระบบ ---------- */
 async function boot() {
   if (!CODE) { block('ไม่พบห้อง', 'ลิงก์ไม่ถูกต้อง ขอลิงก์ห้องจากผู้จัด'); return; }
   var cfg = null;
   try { cfg = await (await fetch('/api/config')).json(); } catch (e) {}
-  if (!cfg || !cfg.url || !cfg.anonKey) {
-    block('ยังตั้งค่าระบบไม่ครบ', 'แจ้งผู้จัดงานให้ตรวจค่า SUPABASE_URL และ SUPABASE_ANON_KEY ใน Vercel');
-    return;
-  }
+  if (!cfg || !cfg.url || !cfg.anonKey) { block('ยังตั้งค่าระบบไม่ครบ', 'แจ้งผู้จัดงานให้ตรวจค่า SUPABASE_URL และ SUPABASE_ANON_KEY ใน Vercel'); return; }
   sb = window.supabase.createClient(cfg.url, cfg.anonKey);
   var sess = (await sb.auth.getSession()).data.session;
   if (!sess) {
     var r = await sb.auth.signInAnonymously();
-    if (r.error || !r.data.session) {
-      block('เข้าระบบไม่ได้', 'แจ้งผู้จัดงานให้เปิด Anonymous sign-ins ใน Supabase (Authentication > Providers)');
-      return;
-    }
+    if (r.error || !r.data.session) { block('เข้าระบบไม่ได้', 'แจ้งผู้จัดงานให้เปิด Anonymous sign-ins ใน Supabase (Authentication > Providers)'); return; }
   }
   document.title = 'Giftcard · ห้อง ' + CODE;
   await refresh();
-  S.timer = setInterval(function () { if (!document.hidden) refresh(); }, 10000);
+  setInterval(function () { if (!document.hidden) refresh(); }, 10000);
   document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(); });
 }
 async function api(path, body) {
   var s = (await sb.auth.getSession()).data.session;
   var out = {};
   try {
-    var r = await fetch(path, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: 'Bearer ' + (s ? s.access_token : '') },
-      body: JSON.stringify(Object.assign({ room: CODE }, body))
-    });
+    var r = await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + (s ? s.access_token : '') }, body: JSON.stringify(Object.assign({ room: CODE }, body)) });
     try { out = await r.json(); } catch (e) {}
     out.status = r.status;
   } catch (e) { out = { status: 0, error: 'network' }; }
   return out;
 }
-async function refresh() {
+async function refresh(force) {
   if (!sb) return;
   var q;
   try {
     q = await Promise.all([
-      fetch('/api/room?code=' + encodeURIComponent(CODE), { cache: 'no-store' }).then(function (r) { return r.status === 404 ? { notFound: true } : r.json().then(function (d) { return { data: d, error: r.ok ? null : d }; }); }),
+      fetch('/api/room?code=' + encodeURIComponent(CODE)).then(function (r) { return r.status === 404 ? { notFound: true } : r.json().then(function (d) { return { data: d, error: r.ok ? null : d }; }); }),
       sb.from('players').select('*').eq('room_id', CODE).maybeSingle(),
-      sb.from('gift_pool').select('*').eq('room_id', CODE),
       sb.from('results').select('*').eq('room_id', CODE).maybeSingle()
     ]);
-    if (q[0].notFound) { if (S.timer) clearInterval(S.timer); block('ไม่พบห้องนี้', 'รหัสห้องไม่ถูกต้อง หรือห้องหมดอายุและถูกลบแล้ว ขอลิงก์ใหม่จากผู้จัด'); return; }
+    if (q[0].notFound) { block('ไม่พบห้องนี้', 'รหัสห้องไม่ถูกต้อง หรือห้องหมดอายุและถูกลบแล้ว ขอลิงก์ใหม่จากผู้จัด'); return; }
   } catch (e) { netNote(true); return; }
-  if (q.some(function (x) { return x.error; })) { netNote(true); if (!S.loaded) { block('เชื่อมต่อฐานข้อมูลไม่ได้', 'ลองรีเฟรชหน้านี้ ถ้ายังไม่ได้ให้แจ้งผู้จัดงานตรวจว่ารัน schema.sql แล้ว'); } return; }
+  if (q.some(function (x) { return x.error; })) { netNote(true); if (!S.loaded) block('เชื่อมต่อฐานข้อมูลไม่ได้', 'ลองรีเฟรชหน้านี้ ถ้ายังไม่ได้ให้แจ้งผู้จัดงานตรวจว่ารัน schema.sql แล้ว'); return; }
   netNote(false);
-  var sig = JSON.stringify([q[0].data, q[1].data, q[2].data, q[3].data]);
-  S.room = q[0].data || S.room;
-  S.me = q[1].data;
-  S.pool = (q[2].data || []).map(function (g) { return { no: g.gift_no, price: g.price, prompt: g.prompt, mine: !!g.mine }; });
-  S.res = q[3].data;
+  var sig = JSON.stringify([q[0].data, q[1].data, q[2].data]);
   var first = !S.loaded;
-  S.loaded = true;
-  if (first || sig !== S.sig) { S.sig = sig; route(); }
+  S.room = q[0].data; S.me = q[1].data; S.myRes = q[2].data; S.loaded = true;
+  if (first || force || sig !== S.sig) { S.sig = sig; route(); }
 }
 
 /* ---------- เลือกหน้า ---------- */
 function route() {
-  applyLabel();
   $('#evTitle').textContent = S.room.title;
-  $('#evPhase').textContent = S.room.phase === 'drawn' ? 'จับคู่แล้ว' : 'เปิดลงทะเบียน';
-  if (!S.loaded) { show('boot'); return; }
+  $('#evPhase').textContent = S.room.phase === 'drawn' ? 'จับฉลากแล้ว' : 'เปิดลงทะเบียน';
+  if (window.GCScene) GCScene.bgBoxes($('#bg'), S.room.players.length);
   if (S.room.phase === 'drawn') S.editing = false;
-  if (S.me && !S.editing) {
-    if (S.room.phase === 'drawn') { show('result'); renderResult(); }
-    else { show('wait'); renderWait(); }
-    return;
-  }
-  if (S.me && S.editing) { show('form'); ensureForm(); return; }
-  if (S.emp) { show('form'); ensureForm(); return; }
-  show('login');
+  if (S.editing || (S.formOpen && !S.me && S.room.phase === 'register')) { show('form'); ensureForm(); return; }
+  show('main'); renderMain();
+  maybeAnimate();
 }
 
-/* ---------- เข้าด้วยรหัสประจำตัว ---------- */
-$('#loginForm').addEventListener('submit', async function (e) {
-  e.preventDefault();
-  var emp = $('#lEmp').value.trim(), err = $('#eLogin');
-  err.textContent = '';
-  if (!emp) { err.textContent = 'ใส่'+L()+'ก่อน'; return; }
-  $('#lSubmit').disabled = true;
-  var r = await api('/api/claim', { emp_id: emp });
-  $('#lSubmit').disabled = false;
-  if (r.status === 200) { await refresh(); route(); return; }
-  if (r.status === 404) {
-    if (S.room.phase !== 'register') { err.textContent = 'ไม่พบรหัสนี้ และปิดรับลงทะเบียนแล้ว แจ้งผู้จัดห้อง'; return; }
-    S.emp = emp; route(); return;
-  }
-  if (r.status === 409 && r.error === 'bound') { err.textContent = 'รหัสนี้ถูกใช้เข้าระบบบนเครื่องอื่นแล้ว ถ้าเปลี่ยนเครื่อง ให้แจ้งผู้จัดห้องกดรีเซ็ต'+L()+' แล้วลองใหม่'; return; }
-  if (r.status === 409) { err.textContent = 'เครื่องนี้ผูกกับ'+L()+'อื่นอยู่ ให้ผู้จัดห้องรีเซ็ตรหัสนั้นก่อน'; return; }
-  err.textContent = 'เข้าไม่สำเร็จ ลองอีกครั้ง';
-});
+/* ---------- หน้าห้อง (หน้าเดียว) ---------- */
+function renderMain() {
+  var R = S.room, drawn = R.phase === 'drawn', pl = R.players, me = S.me;
+  var opened = R.results.filter(function (r) { return r.opened; }).length;
+  $('#mCount').textContent = drawn ? opened + ' / ' + pl.length : String(pl.length);
+  $('#mCountLab').textContent = drawn ? 'กล่องที่เปิดแล้ว' : 'ของขวัญในห้องแล้ว';
+  $('#mSub').textContent = drawn ? 'เปิดกล่องแล้ว จึงเห็นว่าใครได้ของใคร' : (pl.length ? 'ใครลงทะเบียนของขวัญแล้วบ้าง ค้นหาชื่อได้ด้านล่าง' : 'ยังไม่มีใครลงทะเบียนของขวัญ เป็นคนแรกได้เลย');
 
-/* ---------- ฟอร์มลงทะเบียน ---------- */
-var F = { emp: $('#fEmp'), nick: $('#fNick'), no: $('#fNo'), price: $('#fPrice'), prompt: $('#fPrompt'), submit: $('#fSubmit'), cancel: $('#fCancel'), count: $('#fCount') };
-function setErr(id, m) { $('#' + id).textContent = m || ''; }
-function ensureForm() {
-  if (formOn) return;
-  formOn = true;
-  ['eNick', 'eNo', 'ePrice', 'ePrompt', 'eForm'].forEach(function (i) { setErr(i, ''); });
-  var m = S.me;
-  F.emp.value = m ? m.emp_label : S.emp;
-  F.nick.value = m ? m.nick : '';
-  F.no.value = m ? m.gift_no : '';
-  F.price.value = m ? m.price : '';
-  F.prompt.value = m ? m.prompt : '';
-  $('#formTitle').textContent = m ? 'แก้ข้อมูลของคุณ' : 'ลงทะเบียนของขวัญ';
-  F.submit.textContent = m ? 'บันทึกการแก้ไข' : 'เข้าห้องจับฉลาก';
-  F.cancel.hidden = !m;
-  $('#fChange').hidden = !!m;
-  F.count.textContent = String(F.prompt.value.length);
-}
-F.prompt.addEventListener('input', function () { F.count.textContent = String(F.prompt.value.length); });
-F.cancel.addEventListener('click', function () { S.editing = false; route(); });
-$('#fChange').addEventListener('click', function () { S.emp = ''; route(); });
-var JOIN_ERR = {
-  gift_taken: 'เบอร์นี้มีคนลงทะเบียนแล้ว ตรวจกับผู้จัดห้องอีกครั้ง',
-  bound: 'รหัสนี้ถูกใช้บนเครื่องอื่นแล้ว แจ้งผู้จัดห้องให้รีเซ็ตรหัส',
-  get device_has_other() { return 'เครื่องนี้ผูกกับ' + L() + 'อื่นอยู่ ให้ผู้จัดห้องรีเซ็ตรหัสนั้นก่อน'; },
-  room_full: 'ห้องนี้เต็มแล้ว (สูงสุด 300 คน)',
-  closed: 'ผู้จัดห้องเริ่มจับคู่แล้ว ปิดรับลงทะเบียนแล้ว',
-  get not_allowed() { return L() + 'นี้ไม่อยู่ในรายชื่อที่อนุญาต ตรวจอีกครั้งหรือแจ้งผู้จัดห้อง'; }
-};
-$('#f').addEventListener('submit', async function (e) {
-  e.preventDefault();
-  ['eNick', 'eNo', 'ePrice', 'ePrompt', 'eForm'].forEach(function (i) { setErr(i, ''); });
-  var nick = F.nick.value.trim(), no = F.no.value.trim(), prompt = F.prompt.value.trim(), ok = true;
-  var price = Number(F.price.value);
-  if (!nick) { setErr('eNick', 'ใส่ชื่อก่อน'); ok = false; }
-  if (!no) { setErr('eNo', 'ใส่เบอร์ของขวัญที่ได้จากผู้จัดห้อง'); ok = false; }
-  else if (!/^[0-9A-Za-z-]+$/.test(no)) { setErr('eNo', 'ใช้ตัวเลข ตัวอักษรอังกฤษ หรือขีดกลางเท่านั้น'); ok = false; }
-  else if (S.pool.some(function (g) { return !g.mine && String(g.no).toLowerCase() === no.toLowerCase(); })) { setErr('eNo', JOIN_ERR.gift_taken); ok = false; }
-  if (F.price.value === '' || !isFinite(price) || price < 0 || price > 1000000) { setErr('ePrice', 'ใส่ราคาเป็นตัวเลข เช่น 300'); ok = false; }
-  if (prompt.length < 8) { setErr('ePrompt', 'เขียนบรรยายของขวัญให้ละเอียดขึ้นอีกหน่อย (อย่างน้อย 8 ตัวอักษร)'); ok = false; }
-  if (!ok) return;
-  F.submit.disabled = true;
-  var r = await api('/api/join', { emp_id: F.emp.value, nick: nick, gift_no: no, price: price, prompt: prompt });
-  F.submit.disabled = false;
-  if (r.status === 200) {
-    S.editing = false; S.emp = '';
-    await refresh(); S.sig = ''; await refresh();
-    toast('ลงทะเบียนแล้ว');
-    return;
-  }
-  if (r.error === 'gift_taken') setErr('eNo', JOIN_ERR.gift_taken);
-  else setErr('eForm', JOIN_ERR[r.error] || 'บันทึกไม่สำเร็จ ลองอีกครั้ง');
-});
-
-/* ---------- ห้องรอ ---------- */
-function renderWait() {
-  $('#wCount').textContent = 'ของขวัญในกล่อง ' + S.pool.length + ' ใบ';
-  G.renderPool($('#wPool'), S.pool);
-  var box = $('#wMine'); box.replaceChildren();
-  var m = S.me; if (!m) return;
-  var dl = el('dl');
-  [['ชื่อ', m.nick], [L(), m.emp_label], ['เบอร์ของขวัญ', '#' + m.gift_no], ['ราคาขั้นต่ำ', baht(m.price)], ['ของขวัญ', m.prompt]].forEach(function (x) {
-    dl.append(el('dt', null, x[0]), el('dd', null, x[1]));
-  });
-  var b = el('button', 'btn ghost small', 'แก้ข้อมูล'); b.type = 'button';
-  b.addEventListener('click', function () { S.editing = true; route(); });
-  box.append(dl, b);
-}
-
-/* ---------- ผลจับคู่ ---------- */
-function renderResult() {
-  var box = $('#rBody'); box.replaceChildren();
-  var r = S.res;
-  if (!r) {
-    box.append(el('h1', 'h', 'ปิดรับลงทะเบียนแล้ว'), el('p', 'lead', 'ยังไม่พบผลจับคู่ของคุณ ลองรีเฟรชหน้านี้ หรือแจ้งผู้จัดห้อง'));
-  } else {
-    var t = TIERS[r.tier] || TIERS[0];
-    if (!r.opened_at) {
-      box.append(el('h1', 'h', 'จับคู่เสร็จแล้ว'), el('p', 'lead', 'แตะการ์ดของคุณ แล้วลากขอบไปทางซ้าย แอบดูแสงสีก่อนก็ได้ว่าของขวัญระดับไหน'));
-      var wrap = el('div', 'mycard');
-      var b = el('button', 'tile pattern'); b.type = 'button'; b.id = 'openTile';
-      b.append(el('span', 't-top', 'ปีใหม่ ๒๕๗๐'), el('span', 't-name', S.me ? S.me.nick : 'คุณ'), el('span', 't-state', 'แตะเพื่อเปิด'));
-      b.addEventListener('click', function () { openFocus(false); });
-      wrap.append(b); box.append(wrap);
+  var mine = $('#mMine'); mine.replaceChildren();
+  var free = $('#mFree'); free.replaceChildren();
+  if (!drawn) {
+    if (me) {
+      var box = el('div', 'prevbox');
+      var pv = el('div', 'pv'); pv.innerHTML = G.iconSvg(me.icon, 56);
+      var tx = el('div'); tx.append(el('b', null, me.nick + ' · ของขวัญ #' + me.gift_no), el('div', 'hintx', me.unspecified ? 'ไม่ระบุ (กล่องปริศนา)' : me.gift_text));
+      var acts = el('div', 'btnrow'); acts.style.marginTop = '8px';
+      var e = el('button', 'btn ghost small', 'แก้ไข'); e.type = 'button'; e.addEventListener('click', function () { S.editing = true; route(); });
+      acts.append(e); tx.append(acts); box.append(pv, tx); mine.append(box);
     } else {
-      box.append(el('h1', 'h', 'ของขวัญของคุณ'));
-      var got = el('div', 'got'); got.style.setProperty('--tc', t.hex);
-      var chip = el('div', 'chip'); chip.append(el('b', null, t.en), el('span', null, t.th));
-      got.append(el('p', 'muted', 'ไปรับของขวัญเบอร์'), el('div', 'got-no', '#' + r.gift_no), chip,
-        el('p', null, 'ราคาไม่ต่ำกว่า ' + baht(r.price)), el('p', 'muted', r.prompt));
-      var again = el('button', 'btn ghost small', 'ดูการ์ดอีกครั้ง'); again.type = 'button'; again.id = 'openTile';
-      again.addEventListener('click', function () { openFocus(true); });
-      got.append(again); box.append(got);
+      var b = el('button', 'btn', 'ลงทะเบียนของขวัญ'); b.type = 'button'; b.style.marginTop = '14px';
+      b.addEventListener('click', function () { S.formOpen = true; route(); });
+      mine.append(b);
+      var fr = pl.filter(function (p) { return p.free; });
+      if (fr.length) {
+        var fb = el('div', 'freebox');
+        fb.append(el('b', null, 'เคยลงทะเบียนแล้วแต่เปลี่ยนเครื่อง?'), el('p', 'hintx', 'ถ้าผู้จัดกด "ปลดเครื่อง" ให้แล้ว เลือกชื่อของคุณเพื่อกลับเข้าห้อง'));
+        fr.forEach(function (p) {
+          var bt = el('button', 'btn ghost small', p.nick); bt.type = 'button'; bt.style.margin = '4px 6px 0 0';
+          bt.addEventListener('click', async function () {
+            var r = await api('/api/claim', { id: p.id });
+            if (r.status === 200) { toast('ผูกเครื่องนี้กับ ' + p.nick + ' แล้ว'); await refresh(true); }
+            else toast(r.error === 'not_free' ? 'ชื่อนี้มีคนผูกเครื่องไปแล้ว' : 'ผูกเครื่องไม่สำเร็จ');
+          });
+          fb.append(bt);
+        });
+        free.append(fb);
+      }
+    }
+  } else if (me && S.myRes) {
+    var r = S.myRes, tile = el('button', 'btn' + (r.opened_at ? ' ghost' : ''), r.opened_at ? 'ดูของขวัญของฉันอีกครั้ง' : 'แตะเพื่อเปิดกล่องของฉัน');
+    tile.type = 'button'; tile.style.margin = '14px 0';
+    tile.addEventListener('click', function () { openBox(); });
+    mine.append(tile);
+  } else if (drawn && !me) {
+    mine.append(el('p', 'muted', 'ห้องนี้จับฉลากแล้ว คุณดูได้ว่าใครเปิดกล่องไปแล้วบ้าง'));
+  }
+
+  renderFinder();
+
+  var dr = $('#mDraw'); dr.replaceChildren(); dr.hidden = !(me && !drawn);
+  if (me && !drawn) {
+    var go = el('button', 'btn', 'เริ่มจับฉลาก'); go.type = 'button'; go.disabled = pl.length < 2;
+    go.addEventListener('click', startDraw);
+    dr.append(go);
+    if (pl.length < 2) dr.append(el('span', 'hintx', 'ต้องมีอย่างน้อย 2 คน'));
+  }
+}
+$('#mQ').addEventListener('input', function (e) { S.q = e.target.value; if (S.room) renderFinder(); });
+
+function renderFinder() {
+  var R = S.room, drawn = R.phase === 'drawn', q = S.q.trim().toLowerCase();
+  var res = $('#mRes'); res.replaceChildren();
+  var list = $('#mList'); list.replaceChildren();
+  var pl = R.players.filter(function (p) { return !q || p.nick.toLowerCase().indexOf(q) >= 0; });
+  if (q && !pl.length) { list.append(el('p', 'muted', 'ไม่พบชื่อนี้')); return; }
+  var byTo = {}; R.results.forEach(function (r) { byTo[r.to] = r; });
+
+  if (!drawn) {
+    var ul = el('ul', 'who');
+    pl.forEach(function (p) {
+      var li = el('li'), isMe = S.me && S.me.id === p.id;
+      li.append(el('span', 'av', p.nick.slice(0, 1)));
+      var nm = el('span', 'nm', p.nick); if (isMe) nm.append(el('span', 'me', 'คุณ'));
+      li.append(nm, el('span', 'gn', '#' + p.no));
+      if (S.me) {
+        var d = el('button', 'mini', 'ลบ'); d.type = 'button'; d.setAttribute('aria-label', 'ลบของขวัญของ ' + p.nick);
+        d.addEventListener('click', function () { delGift(p); });
+        li.append(d);
+      }
+      ul.append(li);
+    });
+    list.append(ul);
+    return;
+  }
+
+  /* หลังจับฉลาก: ผลค้นหา 2 ทิศทาง + ตารางกล่อง */
+  if (q) {
+    var hit = R.players.filter(function (p) { return p.nick.toLowerCase() === q; })[0] || (pl.length === 1 ? pl[0] : null);
+    if (hit) {
+      var mine = byTo[hit.id], sent = R.results.filter(function (r) { return r.from === hit.id; })[0];
+      var card = el('div', 'res-card');
+      var a = el('div'); a.append(document.createTextNode('🎁 '), el('b', null, hit.nick), document.createTextNode(mine && mine.opened && mine.from ? ' ได้รับของขวัญของ ' : ' ยังไม่เปิดกล่อง จึงยังไม่เห็นว่าได้ของใคร'));
+      if (mine && mine.opened && mine.from) a.append(el('b', null, (playerOf(mine.from) || {}).nick || '-'));
+      var b2 = el('div'); b2.append(document.createTextNode('📦 ของขวัญของ '), el('b', null, hit.nick));
+      b2.append(document.createTextNode(sent ? ' ไปอยู่กับ ' : ' ยังไม่มีใครเปิด จะเห็นเมื่อผู้รับเปิดกล่อง'));
+      if (sent) b2.append(el('b', null, (playerOf(sent.to) || {}).nick || '-'));
+      card.append(a, b2); res.append(card);
     }
   }
-  G.renderPool($('#rPool'), S.pool);
+  var grid = el('div', 'gwrap');
+  pl.forEach(function (p, i) {
+    var r = byTo[p.id], op = !!(r && r.opened), col = COLORS[i % COLORS.length];
+    var t = el('button', 'gt' + (op ? ' op' : '') + (S.me && S.me.id === p.id ? ' me' : '') + (S.pin === p.id ? ' pin' : '')); t.type = 'button';
+    var tip = el('span', 'tip');
+    if (op && r.from) { tip.append(el('b', null, p.nick), document.createTextNode(' ได้รับของขวัญของ '), el('b', null, (playerOf(r.from) || {}).nick || '-')); }
+    else tip.textContent = 'ยังไม่เปิดกล่อง · จะเห็นหลังเปิด';
+    var gb = el('span', 'gb'); gb.style.display = 'block';
+    if (op) gb.append(el('s'));
+    var body = el('i'); body.style.background = op ? '#f4c24d' : col;
+    var lid = el('u'); lid.style.background = op ? '#ffd978' : col; if (!op) lid.style.filter = 'brightness(1.15)';
+    gb.append(body, lid);
+    t.append(tip, gb, el('span', 'gl', p.nick)); t.style.display = 'block';
+    t.addEventListener('click', function () { S.pin = S.pin === p.id ? '' : p.id; renderFinder(); });
+    grid.append(t);
+  });
+  list.append(grid);
+  var lg = el('div', 'legend'); lg.innerHTML = '<span><i style="background:#c8334b"></i>ยังไม่เปิด</span><span><i style="background:#f4c24d"></i>เปิดแล้ว</span>';
+  list.append(lg);
 }
 
-/* ---------- เปิดการ์ด: ฝาพลิก 3D ลากขอบแอบดู ---------- */
-var ov = $('#focus'), scene = $('#scene'), cover = $('#cover'), content = $('#content');
-var theta = 0, committed = false, isDone = false, busy = false, drag = null, raf = 0;
-var easeOut = function (k) { return 1 - Math.pow(1 - k, 3); };
-var easeInOut = function (k) { return k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; };
-function setTheta(t) {
-  theta = t;
-  cover.style.transform = 'rotateY(' + (-t).toFixed(2) + 'deg)';
-  cover.style.setProperty('--shade', (Math.sin(t * Math.PI / 180) * .6).toFixed(3));
-  scene.style.setProperty('--glow', clamp(t / 40, 0, 1).toFixed(3));
-  var op = clamp((t - 70) / 80, 0, 1), bl = 26 * Math.max(0, 1 - t / 140);
-  content.style.opacity = op.toFixed(3);
-  content.style.filter = bl > .1 ? 'blur(' + bl.toFixed(1) + 'px)' : 'none';
+/* ---------- ลบของขวัญ ถามย้ำ 2 ขั้น ---------- */
+async function delGift(p) {
+  var self = S.me && S.me.id === p.id;
+  var ok = await G.confirmFlow([
+    { title: self ? 'ลบของขวัญของคุณ?' : 'ลบของขวัญของ ' + p.nick + '?', ok: 'ดำเนินการต่อ', cancel: 'ไม่ลบแล้ว',
+      items: ['ของขวัญ #' + p.no + ' จะถูกลบออกจากห้อง', p.nick + ' จะหายจากรายชื่อ และต้องลงทะเบียนใหม่ถ้าอยากร่วม', 'จำนวนของขวัญจะลดลง 1 ใบ', 'ลบได้เฉพาะก่อนเริ่มจับฉลาก'] },
+    { title: 'แน่ใจจริงๆ ใช่ไหม?', ok: 'ยืนยันลบ #' + p.no, cancel: 'ไม่ลบแล้ว', note: 'ลบแล้วกู้คืนไม่ได้ ' + (self ? 'และคุณจะต้องลงทะเบียนใหม่' : 'เจ้าของของขวัญต้องลงทะเบียนใหม่เอง') }
+  ]);
+  if (!ok) return;
+  var r = await api('/api/delete-gift', { id: p.id });
+  if (r.status === 200) { toast('ลบแล้ว'); await refresh(true); }
+  else toast(r.error === 'closed' ? 'จับฉลากไปแล้ว ลบไม่ได้' : 'ลบไม่สำเร็จ ลองอีกครั้ง');
 }
-function setS(s) { scene.style.setProperty('--s', s.toFixed(4)); }
-function animate(from, to, ms, ease, onFrame, done) {
-  cancelAnimationFrame(raf);
-  if (!ms || reduced) { onFrame(to, 1); if (done) done(); return; }
-  var t0 = performance.now();
-  var step = function (now) {
-    var k = clamp((now - t0) / ms, 0, 1), e = ease(k);
-    onFrame(from + (to - from) * e, e);
-    if (k < 1) raf = requestAnimationFrame(step); else if (done) done();
-  };
-  raf = requestAnimationFrame(step);
+
+/* ---------- เริ่มจับฉลาก ถามย้ำ 2 ขั้น ---------- */
+async function startDraw() {
+  var n = S.room.players.length;
+  var ok = await G.confirmFlow([
+    { title: 'เริ่มจับฉลากตอนนี้?', ok: 'ดำเนินการต่อ', cancel: 'ยังไม่เริ่ม',
+      items: ['สุ่มจับคู่ของขวัญ ' + n + ' ใบ ให้ ' + n + ' คน แบบวงเดียว ไม่มีใครได้ของตัวเอง', 'ปิดรับลงทะเบียน และลบของขวัญไม่ได้อีก', 'รถเลื่อนซานต้ารับกล่องจากชั้นวางแล้วบินไปแจก', 'ทุกคนเห็นกล่องของตัวเองบนมือถือ เปิดได้ และเห็นว่าใครได้ของใครหลังเปิดกล่อง'] },
+    { title: 'แน่ใจจริงๆ ใช่ไหม?', ok: 'เริ่มจับฉลากเลย', cancel: 'กลับไปตรวจก่อน',
+      note: 'ผลสุ่มจะถูกสร้างทันที มีคน ' + n + ' คน และ ' + n + ' ของขวัญ ตรวจให้ครบแล้วหรือยัง? ใครมาช้าจะไม่ได้ร่วมรอบนี้ ถ้าต้องแก้ ผู้จัดห้องต้องกด "รีเซ็ตรอบ"' }
+  ]);
+  if (!ok) return;
+  var r = await api('/api/draw', {});
+  if (r.status === 200 || r.error === 'already_drawn') { await refresh(true); }
+  else toast(r.error === 'too_few' ? 'ต้องมีอย่างน้อย 2 คน' : 'จับฉลากไม่สำเร็จ ลองอีกครั้ง');
 }
-function syncUI() {
-  $('#openNow').hidden = committed;
-  var cb = $('#closeBtn');
-  cb.textContent = isDone ? 'เสร็จแล้ว' : 'ปิด';
-  cb.classList.toggle('ghost', !isDone);
-  ov.classList.toggle('done', isDone);
-  $('#hint').textContent = committed ? '' : 'ลากขอบขวาของการ์ดไปทางซ้ายเพื่อแอบดู เปิดไม่ถึงครึ่งการ์ดจะปิดกลับ';
+
+/* ---------- ฟอร์มลงทะเบียน ---------- */
+var F = { nick: $('#fNick'), gift: $('#fGift'), un: $('#fUn'), submit: $('#fSubmit') };
+function setErr(id, m) { $('#' + id).textContent = m || ''; }
+function preview() {
+  var key = G.guessIcon(F.gift.value, F.un.checked);
+  $('#fPrev').innerHTML = G.iconSvg(key, 64);
+  $('#fPrevTxt').textContent = F.un.checked ? 'ไม่ระบุ: ผู้รับจะเห็นเป็นกล่องปริศนา ? จนกว่าจะเปิด' : 'ภาพแบนเรียบง่ายที่เลือกให้ตามชื่อของขวัญ';
+  F.gift.disabled = F.un.checked;
 }
-function openFocus(view) {
-  var r = S.res; if (!r) return;
-  var t = TIERS[r.tier] || TIERS[0];
-  $('#coverName').textContent = S.me ? S.me.nick : 'คุณ';
-  $('#gno').textContent = '#' + r.gift_no;
-  $('#tierEn').textContent = t.en;
-  $('#tierTh').textContent = t.th;
-  $('#budget').textContent = 'ราคาไม่ต่ำกว่า ' + baht(r.price);
-  $('#gdesc').textContent = r.prompt || '';
-  scene.style.setProperty('--tc', t.hex);
-  scene.style.setProperty('--tcs', t.hex + '99');
-  committed = !!view; isDone = !!view; busy = false;
-  setTheta(view ? 180 : 0); setS(view ? 1 : 0);
-  syncUI();
-  ov.hidden = false;
-  document.body.style.overflow = 'hidden';
-  $('#closeBtn').focus({ preventScroll: true });
+F.gift.addEventListener('input', preview); F.un.addEventListener('change', preview);
+var formFor = null;
+function ensureForm() {
+  var key = S.me ? S.me.id : 'new';
+  if (formFor === key) return;
+  formFor = key;
+  ['eNick', 'eGift', 'eForm'].forEach(function (i) { setErr(i, ''); });
+  F.nick.value = S.me ? S.me.nick : ''; F.gift.value = S.me ? S.me.gift_text : ''; F.un.checked = S.me ? S.me.unspecified : false;
+  $('#formTitle').textContent = S.me ? 'แก้ข้อมูลของคุณ' : 'ลงทะเบียนของขวัญ';
+  F.submit.textContent = S.me ? 'บันทึก' : 'ลงทะเบียน';
+  preview();
 }
-function closeFocus() {
-  if (busy || ov.hidden) return;
-  cancelAnimationFrame(raf); drag = null;
-  ov.hidden = true; document.body.style.overflow = '';
-  parts = []; running = false;
-  route();
-  setTimeout(function () { var b = $('#openTile'); if (b) b.focus({ preventScroll: true }); }, 60);
+$('#fCancel').addEventListener('click', function () { S.editing = false; S.formOpen = false; formFor = null; route(); });
+var ERR = { nick_taken: 'ชื่อนี้มีคนใช้แล้วในห้อง ลองเพิ่มนามสกุลหรือตัวเลข', closed: 'จับฉลากแล้ว ปิดรับลงทะเบียนแล้ว', room_full: 'ห้องนี้เต็มแล้ว (สูงสุด 300 คน)', device_has_other: 'เครื่องนี้ผูกกับรายชื่ออื่นอยู่แล้ว' };
+$('#f').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  ['eNick', 'eGift', 'eForm'].forEach(function (i) { setErr(i, ''); });
+  var nick = F.nick.value.trim(), gift = F.gift.value.trim(), un = F.un.checked, ok = true;
+  if (!nick) { setErr('eNick', 'ใส่ชื่อก่อน'); ok = false; }
+  if (!un && gift.length < 2) { setErr('eGift', 'บอกหน่อยว่าของขวัญคืออะไร หรือเลือก "ไม่ระบุ"'); ok = false; }
+  if (!ok) return;
+  F.submit.disabled = true;
+  var r = await api('/api/join', { nick: nick, gift_text: gift, unspecified: un, icon: G.guessIcon(gift, un) });
+  F.submit.disabled = false;
+  if (r.status === 200) { S.editing = false; S.formOpen = false; formFor = null; toast('บันทึกแล้ว'); await refresh(true); return; }
+  setErr('eForm', ERR[r.error] || 'บันทึกไม่สำเร็จ ลองอีกครั้ง');
+});
+
+/* ---------- อนิเมชันรถเลื่อนซานต้า (เล่นครั้งเดียวต่อรอบ) ---------- */
+function maybeAnimate() {
+  var R = S.room;
+  if (R.phase !== 'drawn' || !R.drawn_at || reduced || S.animating) return;
+  var k = 'gc-anim-' + CODE;
+  try { if (localStorage.getItem(k) === R.drawn_at) return; } catch (e) {}
+  if (Date.now() - new Date(R.drawn_at).getTime() > 15 * 60 * 1000) { try { localStorage.setItem(k, R.drawn_at); } catch (e) {} return; }
+  S.animating = true;
+  var ov = el('div', 'sleighfx'); ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', 'อนิเมชันแจกของขวัญ');
+  var scn = el('div', 'scn'), cap = el('div', 'cap'), capT = el('span', null, 'กำลังย้ายกล่องจากชั้นวางเข้ารถเลื่อนซานต้า');
+  cap.append(capT);
+  var skip = el('button', 'btn ghost small skip', 'ข้าม'); skip.type = 'button';
+  ov.append(scn, cap, skip); document.body.append(ov);
+  var sc = GCScene.mount(scn, { count: Math.min(R.players.length, 96), fit: 'meet' }), ended = false;
+  function end() {
+    if (ended) return; ended = true;
+    try { localStorage.setItem(k, R.drawn_at); } catch (e) {}
+    ov.remove(); S.animating = false; route();
+  }
+  skip.addEventListener('click', end);
+  var caps = { 1: 'กำลังย้ายกล่องจากชั้นวางเข้ารถเลื่อนซานต้า', 2: 'รถเลื่อนบินขึ้นฟ้า', 3: 'แจกของขวัญให้ทุกคนแล้ว' };
+  sc.deliver(end, function (n) { capT.textContent = caps[n]; });
 }
-function commit() {
-  if (committed || !S.res) return;
-  committed = true; busy = true;
-  if (!S.res.opened_at) {
-    S.res.opened_at = new Date().toISOString();
-    sb.from('results').update({ opened_at: S.res.opened_at }).eq('room_id', CODE).eq('receiver_emp', S.res.receiver_emp).then(function (r) {
-      if (r && r.error) toast('บันทึกสถานะการเปิดไม่สำเร็จ แต่ผลของคุณยังอยู่');
+
+/* ---------- เปิดกล่องของขวัญ ---------- */
+var fxParts = [], fxRun = false;
+function openBox() {
+  var r = S.myRes; if (!r) return;
+  var already = !!r.opened_at;
+  var ov = el('div', 'openfx'); ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', 'เปิดกล่องของขวัญ');
+  var head = el('p', null, already ? 'ของขวัญของคุณ' : 'แตะกล่องเพื่อเปิด'); head.style.cssText = 'font-size:1.1rem;color:#cdbfe2;margin:18px 0 0;text-align:center';
+  var st = el('div', 'stage2');
+  var card = el('div', 'ocard');
+  var pic = el('div', 'pic'); pic.innerHTML = G.iconSvg(r.icon, 96);
+  card.append(pic, el('div', 'no', '#' + r.gift_no), el('p', null, r.unspecified || !r.gift_text ? 'ของขวัญปริศนา (ผู้ให้ไม่ระบุ)' : r.gift_text));
+  st.append(el('div', 'glow'), card, el('div', 'obody'), el('div', 'olid'));
+  var acts = el('div', 'acts'), close = el('button', 'btn ghost', 'ปิด'); close.type = 'button'; acts.append(close);
+  var cv = el('canvas'); cv.setAttribute('aria-hidden', 'true');
+  ov.append(head, st, acts, cv); document.body.append(ov); document.body.style.overflow = 'hidden';
+  function done() { fxParts = []; ov.remove(); document.body.style.overflow = ''; route(); }
+  close.addEventListener('click', done);
+  ov.addEventListener('keydown', function (e) { if (e.key === 'Escape') done(); });
+  function reveal() {
+    ov.classList.add('on'); head.textContent = 'ของขวัญของคุณคือเบอร์ #' + r.gift_no;
+    $('#live').textContent = 'ของขวัญของคุณคือเบอร์ ' + r.gift_no;
+    confetti(cv);
+  }
+  if (already) { ov.classList.add('on'); head.textContent = 'ของขวัญของคุณคือเบอร์ #' + r.gift_no; close.focus(); return; }
+  var btn = el('button', 'btn', 'เปิดกล่อง'); btn.type = 'button'; acts.prepend(btn);
+  function go() {
+    if (S.myRes.opened_at) return;
+    S.myRes.opened_at = new Date().toISOString();
+    btn.remove(); reveal();
+    sb.from('results').update({ opened_at: S.myRes.opened_at }).eq('room_id', CODE).eq('receiver_id', S.me.id).then(function (x) {
+      if (x && x.error) toast('บันทึกสถานะการเปิดไม่สำเร็จ แต่ผลของคุณยังอยู่');
+      else refresh(true);
     });
   }
-  syncUI();
-  var r = S.res;
-  animate(theta, 180, 720, easeOut, function (th, e) { setTheta(th); setS(e); }, function () {
-    busy = false; isDone = true; syncUI();
-    var t = TIERS[r.tier] || TIERS[0];
-    burst(t);
-    $('#live').textContent = 'ของขวัญของคุณคือเบอร์ ' + r.gift_no + ' ระดับ ' + t.th;
-  });
+  btn.addEventListener('click', go); st.addEventListener('click', go); btn.focus();
 }
-function wiggle() {
-  if (reduced || committed || busy) return;
-  animate(theta, 24, 240, easeInOut, function (th) { setTheta(th); }, function () {
-    animate(24, 0, 420, easeOut, function (th) { setTheta(th); });
-  });
-}
-cover.addEventListener('pointerdown', function (e) {
-  if (committed || busy) return;
-  cancelAnimationFrame(raf);
-  drag = { x0: e.clientX, id: e.pointerId, moved: false };
-  try { cover.setPointerCapture(e.pointerId); } catch (_) {}
-});
-cover.addEventListener('pointermove', function (e) {
-  if (!drag) return;
-  var d = drag.x0 - e.clientX;
-  if (Math.abs(d) > 6) drag.moved = true;
-  if (!drag.moved) return;
-  setTheta(Math.acos(clamp(1 - 2 * d / scene.offsetWidth, -1, 1)) * 180 / Math.PI);
-});
-function endDrag(cancelled) {
-  if (!drag) return;
-  var d = drag; drag = null;
-  try { cover.releasePointerCapture(d.id); } catch (_) {}
-  if (!d.moved) { if (!cancelled) wiggle(); return; }
-  if (!cancelled && theta >= 105) commit();
-  else animate(theta, 0, 360, easeOut, function (th) { setTheta(th); });
-}
-cover.addEventListener('pointerup', function () { endDrag(false); });
-cover.addEventListener('pointercancel', function () { endDrag(true); });
-cover.addEventListener('keydown', function (e) {
-  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!committed && !busy) commit(); }
-});
-$('#openNow').addEventListener('click', commit);
-$('#closeBtn').addEventListener('click', closeFocus);
-document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeFocus(); });
-
-/* ---------- พลุกระดาษ ---------- */
-var cv = $('#fx'), cx = cv.getContext('2d'), parts = [], running = false, W = 0, H = 0;
-function fit() {
-  var d = Math.min(2, window.devicePixelRatio || 1);
-  W = window.innerWidth; H = window.innerHeight;
-  cv.width = W * d; cv.height = H * d; cx.setTransform(d, 0, 0, d, 0, 0);
-}
-function spawn(n, x, y, cols, spread, power) {
-  for (var i = 0; i < n; i++) {
-    var a = -Math.PI / 2 + (Math.random() - .5) * spread, v = power * (.45 + Math.random() * .75);
-    parts.push({ x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: Math.random() * 6.28, vr: (Math.random() - .5) * .4,
-      w: 5 + Math.random() * 7, h: 3 + Math.random() * 5, c: cols[(Math.random() * cols.length) | 0],
-      life: 1, decay: .006 + Math.random() * .008, circle: Math.random() < .25 });
-  }
-}
-function loop() {
-  cx.clearRect(0, 0, W, H);
-  parts = parts.filter(function (p) { return p.life > 0 && p.y < H + 40; });
-  for (var i = 0; i < parts.length; i++) {
-    var p = parts[i];
-    p.vy += .28; p.vx *= .992; p.x += p.vx; p.y += p.vy; p.r += p.vr; p.life -= p.decay;
-    cx.save(); cx.globalAlpha = clamp(p.life * 1.6, 0, 1); cx.translate(p.x, p.y); cx.rotate(p.r); cx.fillStyle = p.c;
-    if (p.circle) { cx.beginPath(); cx.arc(0, 0, p.h / 1.4, 0, 6.3); cx.fill(); }
-    else cx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-    cx.restore();
-  }
-  if (parts.length && !ov.hidden) requestAnimationFrame(loop);
-  else { running = false; cx.clearRect(0, 0, W, H); }
-}
-function kick() { if (!running) { running = true; requestAnimationFrame(loop); } }
-function burst(t) {
+function confetti(cv) {
   if (reduced) return;
-  fit();
-  var r = scene.getBoundingClientRect();
-  spawn(t.n, r.left + r.width * .5, r.top + r.height * .45, t.confetti, 2.6, 13);
-  kick();
-  if (t.key === 'legend') {
-    setTimeout(function () {
-      if (ov.hidden) return;
-      spawn(110, W * .1, H * .85, t.confetti, 1.2, 19);
-      spawn(110, W * .9, H * .85, t.confetti, 1.2, 19);
-      kick();
-    }, 350);
+  var cx = cv.getContext('2d'), d = Math.min(2, window.devicePixelRatio || 1), W = window.innerWidth, H = window.innerHeight;
+  cv.width = W * d; cv.height = H * d; cx.setTransform(d, 0, 0, d, 0, 0);
+  var cols = ['#f4c24d', '#ffe08a', '#ff6b81', '#46d6b0', '#a78bff', '#f6effc'];
+  for (var i = 0; i < 160; i++) {
+    var a = -Math.PI / 2 + (Math.random() - .5) * 2.6, v = 13 * (.45 + Math.random() * .75);
+    fxParts.push({ x: W / 2, y: H * .45, vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: Math.random() * 6.28, vr: (Math.random() - .5) * .4, w: 5 + Math.random() * 7, h: 3 + Math.random() * 5, c: cols[(Math.random() * cols.length) | 0], life: 1, dec: .006 + Math.random() * .008 });
   }
+  if (fxRun) return; fxRun = true;
+  (function loop() {
+    cx.clearRect(0, 0, W, H);
+    fxParts = fxParts.filter(function (p) { return p.life > 0 && p.y < H + 40; });
+    fxParts.forEach(function (p) {
+      p.vy += .28; p.vx *= .992; p.x += p.vx; p.y += p.vy; p.r += p.vr; p.life -= p.dec;
+      cx.save(); cx.globalAlpha = Math.max(0, Math.min(1, p.life * 1.6)); cx.translate(p.x, p.y); cx.rotate(p.r); cx.fillStyle = p.c; cx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); cx.restore();
+    });
+    if (fxParts.length && cv.isConnected) requestAnimationFrame(loop); else { fxRun = false; cx.clearRect(0, 0, W, H); }
+  })();
 }
 
 show('boot');

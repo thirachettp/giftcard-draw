@@ -197,3 +197,81 @@ td.num{font-variant-numeric:tabular-nums}
 
 [hidden]{display:none!important}
 img{max-width:100%}
+
+/* ---------- เวอร์ชัน 3: ห้อง คลังสินค้า ถามย้ำ ผลจับฉลาก ---------- */
+.btn.danger{background:#ff8a9a;border-color:#ff8a9a;color:#2a0a10;font-weight:700}
+.cfwrap{position:fixed;inset:0;z-index:80;background:rgba(10,7,18,.72);display:grid;place-items:center;padding:16px;overflow:auto}
+.cfcard{width:min(440px,100%);box-sizing:border-box;padding:24px;border-radius:20px;background:#1e1630;border:1px solid var(--line);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.cfstep{display:flex;align-items:center;gap:10px;font-size:.8rem;letter-spacing:.12em;color:var(--gold)}
+.cfstep span{width:22px;height:22px;border-radius:50%;background:var(--gold);color:#15101f;display:grid;place-items:center;font-weight:700}
+.cfstep.danger{color:#ff8a9a}.cfstep.danger span{background:#ff8a9a}
+.cftitle{font-family:var(--font-display);font-weight:400;font-size:1.6rem;line-height:1.3;margin:12px 0 0}
+.cfsub{margin:12px 0 0;color:#cdbfe2;font-size:.95rem}
+.cflist{margin:8px 0 0;padding-left:20px;line-height:1.75}
+.cfnote{margin:12px 0 0;color:#cdbfe2;line-height:1.7}
+.cfrow{display:flex;gap:10px;margin-top:20px}.cfrow .btn{flex:1}
+
+.bgwrap{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.bgbox{position:absolute;border-radius:4px;display:block}
+.bgbox::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:16%;margin-left:-8%;background:#ffe9b8;opacity:.8}
+.bgbox::after{content:"";position:absolute;top:42%;left:0;right:0;height:16%;background:#ffe9b8;opacity:.8}
+.roomhead,.roommain{position:relative;z-index:1}
+.bigcount{display:flex;align-items:baseline;gap:10px;margin:14px 0 4px}
+.bigcount b{font-family:var(--font-display);font-weight:400;font-size:clamp(3rem,16vw,4.6rem);line-height:1;color:var(--gold)}
+.srchbox{margin:14px 0 8px}
+.srchbox input{width:100%;box-sizing:border-box;background:var(--ink);border:1px solid var(--line);color:var(--text);border-radius:12px;padding:.7em 1em;font:inherit}
+.who{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:2px}
+.who li{display:flex;align-items:center;gap:10px;padding:10px 4px;border-top:1px solid var(--line)}
+.who .av{width:34px;height:34px;border-radius:50%;background:#2a2040;display:grid;place-items:center;flex:none;font-weight:700;color:var(--gold)}
+.who .nm{flex:1;min-width:0;overflow-wrap:anywhere}
+.who .gn{font-family:var(--font-display);color:var(--gold)}
+.who .thumb{width:44px;height:44px;border-radius:10px;background:radial-gradient(circle at 50% 38%,#4a3a68,#241a38);display:grid;place-items:center;flex:none}
+.who .gt2{font-size:.85rem;color:#b0a3c9}
+.who .me{font-size:.7rem;border:1px solid var(--gold);color:var(--gold);border-radius:999px;padding:0 .6em;margin-left:6px}
+.mini{appearance:none;font:inherit;font-size:.8rem;cursor:pointer;background:transparent;color:#ff8a9a;border:1px solid #ff8a9a66;border-radius:999px;padding:.2em .8em}
+.mini.plain{color:var(--text);border-color:var(--line)}
+.freebox{border:1px dashed var(--line);border-radius:14px;padding:14px;margin-top:16px}
+.prevbox{display:flex;align-items:center;gap:14px;padding:12px;border-radius:14px;background:#1e1630;border:1px solid var(--line);margin-top:6px}
+.prevbox .pv{width:84px;height:84px;border-radius:14px;background:radial-gradient(circle at 50% 38%,#4a3a68,#241a38);display:grid;place-items:center;flex:none}
+.switch{display:flex;align-items:center;gap:10px;cursor:pointer}
+.res-card{border-radius:12px;background:#241a38;border:1px solid var(--gold);padding:10px 14px;margin:8px 0;line-height:1.7}
+.gwrap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 12px;margin-top:16px}
+@media(min-width:640px){.gwrap{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.gt{position:relative;text-align:center;cursor:pointer;background:none;border:0;color:inherit;font:inherit;padding:0}
+.gt .gb{position:relative;height:64px}
+.gt .gb i{position:absolute;left:8px;right:8px;bottom:0;height:40px;border-radius:4px 4px 8px 8px}
+.gt .gb i::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:14px;margin-left:-7px;background:#ffe9b8;opacity:.88}
+.gt .gb u{position:absolute;left:4px;right:4px;bottom:34px;height:14px;border-radius:3px;text-decoration:none}
+.gt.op .gb u{transform-origin:left bottom;transform:translateY(-8px) rotate(-16deg)}
+.gt .gb s{position:absolute;left:50%;top:-4px;width:46px;height:46px;margin-left:-23px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,226,168,.9),transparent)}
+.gt .gl{margin-top:6px;font-size:.8rem;color:#cdbfe2;overflow-wrap:anywhere}
+.gt.me .gl{color:var(--gold);font-weight:700}
+.gt .tip{display:none;position:absolute;left:50%;bottom:100%;transform:translateX(-50%);margin-bottom:6px;width:176px;background:#f6effc;color:#15101f;border-radius:10px;padding:8px 10px;font-size:.8rem;line-height:1.4;z-index:5;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.gt:hover,.gt:focus-visible,.gt.pin{z-index:6}
+.gt:hover .tip,.gt:focus-visible .tip,.gt.pin .tip{display:block}
+.legend{display:flex;gap:18px;justify-content:center;font-size:.8rem;color:#b0a3c9;margin-top:18px}
+.legend i{display:inline-block;width:14px;height:12px;border-radius:3px;margin-right:6px;vertical-align:middle}
+
+/* กล่องของขวัญที่เปิดได้ */
+.openfx{position:fixed;inset:0;z-index:70;background:radial-gradient(520px 460px at 50% 52%,rgba(244,194,77,.18),transparent 66%),#15101f;display:flex;flex-direction:column;align-items:center;padding:22px;overflow:auto}
+.openfx .stage2{position:relative;margin-top:26px;width:260px;height:400px;flex:none}
+.openfx .glow{position:absolute;left:-60px;right:-60px;top:60px;height:300px;background:radial-gradient(closest-side,rgba(255,226,168,.75),rgba(244,194,77,.25) 55%,transparent 100%);opacity:0;transition:opacity .8s}
+.openfx .ocard{position:absolute;left:30px;width:200px;top:190px;height:262px;z-index:2;opacity:0;border-radius:16px;background:linear-gradient(160deg,#2a2040,#1e1630);border:2px solid var(--gold);box-sizing:border-box;padding:12px;box-shadow:0 0 30px rgba(244,194,77,.45);transition:top .9s cubic-bezier(.2,.8,.2,1),opacity .5s}
+.openfx .ocard .pic{height:118px;border-radius:10px;background:radial-gradient(circle at 50% 40%,#4a3a68,#241a38);display:grid;place-items:center}
+.openfx .ocard .no{font-family:var(--font-display);font-size:1.9rem;line-height:1;color:var(--gold);margin-top:10px}
+.openfx .ocard p{font-size:.9rem;line-height:1.45;margin:6px 0 0}
+.openfx .obody{position:absolute;left:20px;width:220px;top:236px;height:130px;z-index:3;border-radius:6px 6px 10px 10px;background:linear-gradient(180deg,#b3203a,#8a1530);box-shadow:0 14px 30px rgba(0,0,0,.5)}
+.openfx .olid{position:absolute;left:10px;width:240px;top:196px;height:48px;z-index:4;border-radius:8px;background:linear-gradient(180deg,#d8364f,#b3203a);transform-origin:left bottom;transition:transform .9s cubic-bezier(.3,1.3,.5,1);box-shadow:0 8px 18px rgba(0,0,0,.4)}
+.openfx .obody::before,.openfx .olid::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:30px;margin-left:-15px;background:#ffe9b8;opacity:.9}
+.openfx.on .glow{opacity:1}
+.openfx.on .olid{transform:translate(-70px,-50px) rotate(-52deg)}
+.openfx.on .ocard{top:-24px;opacity:1}
+.openfx canvas{position:fixed;inset:0;pointer-events:none;z-index:2}
+.openfx .acts{margin-top:auto;padding-top:20px;display:flex;gap:10px;position:relative;z-index:3}
+
+/* อนิเมชันรถเลื่อน */
+.sleighfx{position:fixed;inset:0;z-index:75;background:#0b0a14}
+.sleighfx .cap{position:absolute;left:0;right:0;top:calc(18px + env(safe-area-inset-top,0px));text-align:center;z-index:2}
+.sleighfx .cap span{display:inline-block;background:rgba(21,16,31,.82);border:1px solid var(--gold);border-radius:999px;padding:8px 22px}
+.sleighfx .skip{position:absolute;right:16px;bottom:16px;z-index:2}
+.sleighfx .scn{position:absolute;inset:0}

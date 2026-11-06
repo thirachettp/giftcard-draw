@@ -29,16 +29,36 @@ export function cyclicPerm(n) {
   return a;
 }
 
-/** ระดับการ์ดจากราคา: 0 ธรรมดา, 1 หายาก, 2 ตำนาน (ต้องตรงกับ makeTier ใน public/common.js) */
-export function makeTier(prices) {
-  const set = new Set(prices.map((p) => Number(p) || 0));
-  const list = [...set].sort((a, b) => a - b);
-  const k = list.length;
-  return (price) => {
-    if (k < 2) return 0;
-    const pos = list.indexOf(Number(price) || 0) / (k - 1);
-    return pos >= 1 ? 2 : pos >= 0.4 ? 1 : 0;
-  };
+export const ICONS = ['cup', 'book', 'phones', 'plant', 'candle', 'snack', 'bag', 'toy', 'box', 'mystery'];
+
+/** ผู้เล่น (ของขวัญ) ของเครื่องนี้ในห้อง หรือ null */
+export async function memberOf(roomId, uid) {
+  if (!uid) return null;
+  const { data } = await db().from('players').select('id,nick').eq('room_id', roomId).eq('user_id', uid).maybeSingle();
+  return data || null;
+}
+
+/** จับฉลากแบบวงเดียว: ล็อกห้องก่อน แล้วเขียนผล ถ้าเขียนไม่สำเร็จจะย้อนกลับ */
+export async function runDraw(room) {
+  const sb = db(), rid = room.id;
+  if (room.phase !== 'register') return { error: 'already_drawn', status: 409 };
+  const { data: players, error } = await sb.from('players').select('id,gift_no,gift_text,unspecified,icon').eq('room_id', rid).order('gift_no');
+  if (error) return { error: 'server_error', status: 500 };
+  if (players.length < 2) return { error: 'too_few', status: 400 };
+  const perm = cyclicPerm(players.length);
+  const rows = players.map((p, i) => {
+    const g = players[perm[i]];
+    return { room_id: rid, receiver_id: p.id, giver_id: g.id, gift_no: g.gift_no, gift_text: g.gift_text, unspecified: g.unspecified, icon: g.icon };
+  });
+  const lock = await sb.from('rooms').update({ phase: 'drawn', drawn_at: new Date().toISOString() }).eq('id', rid).eq('phase', 'register').select('id');
+  if (lock.error || !lock.data || !lock.data.length) return { error: 'already_drawn', status: 409 };
+  const ins = await sb.from('results').insert(rows);
+  if (ins.error) {
+    await sb.from('results').delete().eq('room_id', rid);
+    await sb.from('rooms').update({ phase: 'register', drawn_at: null }).eq('id', rid);
+    return { error: 'insert_failed', status: 500 };
+  }
+  return { ok: true, count: rows.length };
 }
 
 /* ---------- ห้อง ---------- */

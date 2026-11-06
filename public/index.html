@@ -25,6 +25,7 @@ body{padding:0}
 .hero-cta{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:28px}
 .hero-cta .btn{font-size:1.05rem;padding:.75em 1.9em;text-decoration:none;display:inline-block}
 .hero-cta .btn.ghost{background:rgba(21,16,31,.55);border-color:rgba(246,239,252,.5);backdrop-filter:blur(4px)}
+.rpill{display:inline-flex;align-items:baseline;gap:10px;background:rgba(21,16,31,.7);border:1px solid rgba(244,194,77,.4);border-radius:999px;padding:6px 18px;letter-spacing:0;font-size:.9rem;color:#ecdff7}.rpill b{font-family:var(--font-display);font-weight:400;font-size:1.5rem;color:var(--gold)}
 .hero-hint{position:absolute;left:0;right:0;bottom:22px;text-align:center;font-size:.8rem;letter-spacing:.22em;color:#cdbfe2}
 .below{max-width:960px;margin:0 auto;padding:40px max(16px,env(safe-area-inset-left)) 56px}
 .tw{animation:tw 2.6s ease-in-out infinite}
@@ -43,13 +44,13 @@ body{padding:0}
   <div class="hero-body">
     <span class="eyebrow">จับฉลากของขวัญ</span>
     <h1 id="heroTitle">Gift<em>card</em></h1>
-    <p class="sub">ทุกกล่อง มีปลายทาง สร้างห้องจับฉลาก แล้วให้ทุกคนค่อยๆ แกะการ์ดของตัวเองบนมือถือพร้อมกัน</p>
+    <p class="sub">ทุกกล่อง มีปลายทาง สร้างห้องจับฉลาก แล้วให้ทุกคนเปิดกล่องของขวัญของตัวเองบนมือถือ</p>
     <div class="hero-cta">
       <a class="btn" href="#create" id="goCreate">สร้างห้อง</a>
       <a class="btn ghost" href="#join" id="goJoin">เข้าร่วมห้อง</a>
     </div>
   </div>
-  <div class="hero-hint" aria-hidden="true">ไม่ต้องสมัครสมาชิก</div>
+  <div class="hero-hint"><div id="roomsPill" class="rpill" hidden><b id="roomsN">0</b> ห้องที่สร้างไปแล้ว</div><div aria-hidden="true" style="margin-top:8px">ไม่ต้องสมัครสมาชิก</div></div>
 </section>
 
 <div class="below">
@@ -86,9 +87,9 @@ body{padding:0}
         <summary>วิธีเล่น</summary>
         <ol class="muted" style="margin:10px 0 0 1.2em;line-height:1.8">
           <li>ผู้จัดสร้างห้อง แล้วแชร์ลิงก์หรือ QR ให้ทุกคน</li>
-          <li>ทุกคนกรอกชื่อ ของขวัญที่นำมา ราคาขั้นต่ำ และเบอร์ของขวัญ</li>
-          <li>ผู้จัดกดเริ่มจับคู่ ระบบสุ่มแบบวงเดียว ไม่มีใครได้ของตัวเอง</li>
-          <li>ทุกคนค่อยๆ แกะขอบการ์ดของตัวเองบนมือถือ</li>
+          <li>ทุกคนกรอกชื่อกับของขวัญที่นำมา (ไม่ระบุก็ได้)</li>
+          <li>ใครก็ได้กดเริ่มจับฉลาก ระบบสุ่มแบบวงเดียว ไม่มีใครได้ของตัวเอง</li>
+          <li>รถเลื่อนซานต้าแจกกล่อง แล้วทุกคนเปิดกล่องของตัวเองบนมือถือ</li>
         </ol>
       </details>
     </section>
@@ -226,6 +227,13 @@ $('#joinForm').addEventListener('submit', function (e) {
 <script>
 document.getElementById('goCreate').addEventListener('click', function () { setTimeout(function () { var t = document.getElementById('cTitle'); if (t) t.focus({ preventScroll: true }); }, 450); });
 document.getElementById('goJoin').addEventListener('click', function () { setTimeout(function () { var t = document.getElementById('jCode'); if (t) t.focus({ preventScroll: true }); }, 450); });
+</script>
+<script>
+fetch('/api/stats').then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+  if (!d || !d.rooms) return;
+  document.getElementById('roomsN').textContent = Number(d.rooms).toLocaleString('en-US');
+  document.getElementById('roomsPill').hidden = false;
+}).catch(function () {});
 </script>
 </body>
 </html>
