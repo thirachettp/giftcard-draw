@@ -29,7 +29,7 @@ p{margin:0}
 .h{font-size:clamp(1.7rem,6vw,2.5rem);line-height:1.25;color:var(--gold)}
 .h2{font-size:1.25rem;line-height:1.3;margin:32px 0 12px}
 .lead{color:var(--muted);margin-top:8px;max-width:36em}
-.narrow{max-width:640px}
+.narrow{max-width:640px;margin-inline:auto}
 
 .btn{appearance:none;font:inherit;font-weight:500;cursor:pointer;border:1px solid var(--gold);background:var(--gold);color:#2a1606;border-radius:999px;padding:.6em 1.4em}
 .btn.ghost{background:transparent;color:var(--text);border-color:var(--line)}
@@ -369,3 +369,7 @@ html,body{touch-action:manipulation;-webkit-text-size-adjust:100%}
 .hsheet .hb{max-width:1000px;margin-inline:auto}
 .hsheet .savebox{border:1px solid var(--gold);background:rgba(244,194,77,.08);border-radius:14px;padding:16px;margin-bottom:22px}
 .hsheet .savebox p{margin:0 0 10px}
+
+.mainv .tools{margin-bottom:14px}
+.mainv #mMine{margin-top:6px}
+.mainv #mMine .muted{text-align:center;margin:8px 0 14px}
